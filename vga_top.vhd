@@ -4,9 +4,8 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity vga_top is
     port (
-        clk_125mhz : in  std_logic;  -- 125 MHz input clock
+        clk_125mhz : in  std_logic;
         reset      : in  std_logic;
-        -- VGA output signals
         vga_hsync  : out std_logic;
         vga_vsync  : out std_logic;
         vga_red    : out std_logic_vector(3 downto 0);
@@ -16,7 +15,6 @@ entity vga_top is
 end vga_top;
 
 architecture Structural of vga_top is
-    -- Component declaration for the ROM
     component blk_mem_gen_0
         port (
             clka  : in  std_logic;
@@ -25,53 +23,52 @@ architecture Structural of vga_top is
         );
     end component;
 
-    -- Constants for clock division (125MHz -> 25MHz)
-    constant CLK_DIVIDER : integer := 5;  -- 125MHz / 5 = 25MHz
-    signal clk_counter   : integer range 0 to CLK_DIVIDER-1 := 0;
-    signal pixel_clk     : std_logic;
+    -- Clock enable signals
+    signal pixel_en      : std_logic;
+    signal clk_counter   : integer range 0 to 4 := 0;
     
-    -- RAM interface signals
+    -- RAM interface
     signal rom_addr      : std_logic_vector(15 downto 0);
     signal rom_data      : std_logic_vector(11 downto 0);
     
 begin
-    -- Clock divider: 125MHz -> 25MHz (for VGA timing)
+    -- Clock enable generator (25MHz enable from 125MHz)
     process(clk_125mhz, reset)
     begin
         if reset = '1' then
             clk_counter <= 0;
-            pixel_clk <= '0';
+            pixel_en <= '0';
         elsif rising_edge(clk_125mhz) then
-            if clk_counter = CLK_DIVIDER-1 then
+            if clk_counter = 4 then
                 clk_counter <= 0;
-                pixel_clk <= not pixel_clk;
+                pixel_en <= '1';
             else
                 clk_counter <= clk_counter + 1;
+                pixel_en <= '0';
             end if;
         end if;
     end process;
 
-    -- VGA Controller Instance (runs at 25MHz)
-    vga_controller_inst: entity work.vga_controller
+    -- VGA Controller
+    vga_inst: entity work.vga_controller
         port map (
-            clk_50mhz => pixel_clk,  -- Actually 25MHz (legacy port name)
-            reset     => reset,
-            vga_hsync => vga_hsync,
-            vga_vsync => vga_vsync,
-            vga_red   => vga_red,
-            vga_green => vga_green,
-            vga_blue  => vga_blue,
-            bram_addr => rom_addr,
-            bram_data => rom_data
+            clk_125mhz => clk_125mhz,
+            pix_en     => pixel_en,
+            reset      => reset,
+            vga_hsync  => vga_hsync,
+            vga_vsync  => vga_vsync,
+            vga_red    => vga_red,
+            vga_green  => vga_green,
+            vga_blue   => vga_blue,
+            bram_addr  => rom_addr,
+            bram_data  => rom_data
         );
 
-    -- Block Memory Generator Instance
-    -- Note: Using 125MHz clock for synchronous reads with VGA controller
-    rom_inst: blk_mem_gen_0
+    -- Block Memory Generator
+    bram_inst: blk_mem_gen_0
         port map (
-            clka  => clk_125mhz,  -- Full speed clock
+            clka  => clk_125mhz,
             addra => rom_addr,
             douta => rom_data
         );
-        
 end Structural;
