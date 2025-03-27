@@ -120,7 +120,7 @@ begin
 
   process (qx, qy)
   begin
-    ram_addr_porta <= std_logic_vector(unsigned(qx) + (to_unsigned(255, 8) - unsigned(qy)) * 256);
+    ram_addr_porta <= std_logic_vector(unsigned("00000000" & qx) + (to_unsigned(255, 8) - unsigned(qy)) * 256);
     ram_data_porta <= color;
   end process;
 
