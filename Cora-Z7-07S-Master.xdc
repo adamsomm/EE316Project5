@@ -4,8 +4,8 @@
 ## - rename the used ports (in each line, after get_ports) according to the top level signal names in the project
 
 ## PL System Clock
-set_property -dict {PACKAGE_PIN H16 IOSTANDARD LVCMOS33} [get_ports iCLK]
-create_clock -period 8.000 -name sys_clk_pin -waveform {0.000 4.000} -add [get_ports iCLK]
+set_property -dict {PACKAGE_PIN H16 IOSTANDARD LVCMOS33} [get_ports clk_125mhz]
+create_clock -period 8.000 -name sys_clk_pin -waveform {0.000 4.000} -add [get_ports clk_125mhz]
 
 ## RGB LEDs
 #set_property -dict { PACKAGE_PIN L15   IOSTANDARD LVCMOS33 } [get_ports { led0_b }]; #IO_L22N_T3_AD7N_35 Sch=led0_b
@@ -20,21 +20,22 @@ set_property -dict {PACKAGE_PIN D20 IOSTANDARD LVCMOS33} [get_ports reset]
 #set_property -dict { PACKAGE_PIN D19   IOSTANDARD LVCMOS33 } [get_ports { btn[1] }]; #IO_L4P_T0_35 Sch=btn[1]
 
 ## Pmod Header JA
-set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports TX_out]
-set_property -dict {PACKAGE_PIN Y19 IOSTANDARD LVCMOS33} [get_ports RX_in]
-set_property -dict {PACKAGE_PIN Y16 IOSTANDARD LVCMOS33} [get_ports ps2_clk]
-set_property -dict {PACKAGE_PIN Y17 IOSTANDARD LVCMOS33} [get_ports ps2_data]
-#set_property -dict { PACKAGE_PIN U18   IOSTANDARD LVCMOS33 } [get_ports { data_in[4] }]; #IO_L12P_T1_MRCC_34 Sch=ja_p[3]
-#set_property -dict { PACKAGE_PIN U19   IOSTANDARD LVCMOS33 } [get_ports { data_in[5] }]; #IO_L12N_T1_MRCC_34 Sch=ja_n[3]
-#set_property -dict { PACKAGE_PIN W18   IOSTANDARD LVCMOS33 } [get_ports { ja[6] }]; #IO_L22P_T3_34 Sch=ja_p[4]
-#set_property -dict { PACKAGE_PIN W19   IOSTANDARD LVCMOS33 } [get_ports { ja[7] }]; #IO_L22N_T3_34 Sch=ja_n[4]
+set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports {vga_red[0]}]
+set_property -dict {PACKAGE_PIN Y19 IOSTANDARD LVCMOS33} [get_ports {vga_red[1]}]
+set_property -dict {PACKAGE_PIN Y16 IOSTANDARD LVCMOS33} [get_ports {vga_red[2]}]
+set_property -dict {PACKAGE_PIN Y17 IOSTANDARD LVCMOS33} [get_ports {vga_red[3]}]
+set_property -dict {PACKAGE_PIN U18 IOSTANDARD LVCMOS33} [get_ports {vga_blue[0]}]
+set_property -dict {PACKAGE_PIN U19 IOSTANDARD LVCMOS33} [get_ports {vga_blue[1]}]
+set_property -dict {PACKAGE_PIN W18 IOSTANDARD LVCMOS33} [get_ports {vga_blue[2]}]
+set_property -dict {PACKAGE_PIN W19 IOSTANDARD LVCMOS33} [get_ports {vga_blue[3]}]
 
 ## Pmod Header JB
-set_property -dict {PACKAGE_PIN W14 IOSTANDARD LVCMOS33} [get_ports LCDscl]
-set_property -dict {PACKAGE_PIN Y14 IOSTANDARD LVCMOS33} [get_ports LCDsda]
-set_property -dict {PACKAGE_PIN T11 IOSTANDARD LVCMOS33} [get_ports Sevscl]
-set_property -dict {PACKAGE_PIN T10 IOSTANDARD LVCMOS33} [get_ports Sevsda]
-set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33} [get_ports regPulse]
+set_property -dict {PACKAGE_PIN W14 IOSTANDARD LVCMOS33} [get_ports {vga_green[0]}]
+set_property -dict {PACKAGE_PIN Y14 IOSTANDARD LVCMOS33} [get_ports {vga_green[1]}]
+set_property -dict {PACKAGE_PIN T11 IOSTANDARD LVCMOS33} [get_ports {vga_green[2]}]
+set_property -dict {PACKAGE_PIN T10 IOSTANDARD LVCMOS33} [get_ports {vga_green[3]}]
+set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33} [get_ports vga_hsync]
+set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33} [get_ports vga_vsync]
 #set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports { jb[5] }]; #IO_L18N_T2_34 Sch=jb_n[3]
 #set_property -dict { PACKAGE_PIN V12   IOSTANDARD LVCMOS33 } [get_ports { jb[6] }]; #IO_L4P_T0_34 Sch=jb_p[4]
 #set_property -dict { PACKAGE_PIN W13   IOSTANDARD LVCMOS33 } [get_ports { jb[7] }]; #IO_L4N_T0_34 Sch=jb_n[4]
@@ -89,10 +90,10 @@ set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33} [get_ports regPulse]
 #set_property -dict { PACKAGE_PIN A20   IOSTANDARD LVCMOS33 } [get_ports { ck_a11 }]; #IO_L2N_T0_AD8N_35 Sch=ad_n[8]
 
 ## ChipKit Outer Digital Header
-#set_property -dict { PACKAGE_PIN U14   IOSTANDARD LVCMOS33 } [get_ports { data_in[7] }]; #IO_L11P_T1_SRCC_34 Sch=ck_io[0]
-#set_property -dict { PACKAGE_PIN V13   IOSTANDARD LVCMOS33 } [get_ports { data_in[6] }]; #IO_L3N_T0_DQS_34 Sch=ck_io[1]
-#set_property -dict { PACKAGE_PIN T14   IOSTANDARD LVCMOS33 } [get_ports { data_in[5] }]; #IO_L5P_T0_34 Sch=ck_io[2]
-#set_property -dict { PACKAGE_PIN T15   IOSTANDARD LVCMOS33 } [get_ports { data_in[4] }]; #IO_L5N_T0_34 Sch=ck_io[3]
+set_property -dict {PACKAGE_PIN U14 IOSTANDARD LVCMOS33} [get_ports Ax]
+set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVCMOS33} [get_ports Ay]
+set_property -dict {PACKAGE_PIN T14 IOSTANDARD LVCMOS33} [get_ports Bx]
+set_property -dict {PACKAGE_PIN T15 IOSTANDARD LVCMOS33} [get_ports By]
 #set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports { data_in[3] }]; #IO_L21P_T3_DQS_34 Sch=ck_io[4]
 #set_property -dict { PACKAGE_PIN V18   IOSTANDARD LVCMOS33 } [get_ports { data_in[2] }]; #IO_L21N_T3_DQS_34 Sch=ck_io[5]
 #set_property -dict { PACKAGE_PIN R17   IOSTANDARD LVCMOS33 } [get_ports { data_in[1] }]; #IO_L19N_T3_VREF_34 Sch=ck_io[6]
@@ -150,6 +151,7 @@ set_property -dict {PACKAGE_PIN V16 IOSTANDARD LVCMOS33} [get_ports regPulse]
 #set_property -dict { PACKAGE_PIN K19   IOSTANDARD LVCMOS33 } [get_ports { user_dio[12] }]; #IO_L10P_T1_AD11P_35 Sch=user_dio[12]
 
 
+
 create_debug_core u_ila_0 ila
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0]
 set_property ALL_PROBE_SAME_MU_CNT 4 [get_debug_cores u_ila_0]
@@ -160,59 +162,31 @@ set_property C_INPUT_PIPE_STAGES 0 [get_debug_cores u_ila_0]
 set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
 set_property C_TRIGOUT_EN false [get_debug_cores u_ila_0]
 set_property port_width 1 [get_debug_ports u_ila_0/clk]
-connect_debug_port u_ila_0/clk [get_nets [list iCLK_IBUF_BUFG]]
+connect_debug_port u_ila_0/clk [get_nets [list clk_125mhz_IBUF_BUFG]]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
 set_property port_width 8 [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {ps2_keyboard_to_ascii_inst/ascii_code[0]} {ps2_keyboard_to_ascii_inst/ascii_code[1]} {ps2_keyboard_to_ascii_inst/ascii_code[2]} {ps2_keyboard_to_ascii_inst/ascii_code[3]} {ps2_keyboard_to_ascii_inst/ascii_code[4]} {ps2_keyboard_to_ascii_inst/ascii_code[5]} {ps2_keyboard_to_ascii_inst/ascii_code[6]} {ps2_keyboard_to_ascii_inst/ascii_code[7]}]]
+connect_debug_port u_ila_0/probe0 [get_nets [list {qx[0]} {qx[1]} {qx[2]} {qx[3]} {qx[4]} {qx[5]} {qx[6]} {qx[7]}]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe1]
 set_property port_width 8 [get_debug_ports u_ila_0/probe1]
-connect_debug_port u_ila_0/probe1 [get_nets [list {ps2_keyboard_to_ascii_inst/ascii[0]} {ps2_keyboard_to_ascii_inst/ascii[1]} {ps2_keyboard_to_ascii_inst/ascii[2]} {ps2_keyboard_to_ascii_inst/ascii[3]} {ps2_keyboard_to_ascii_inst/ascii[4]} {ps2_keyboard_to_ascii_inst/ascii[5]} {ps2_keyboard_to_ascii_inst/ascii[6]} {ps2_keyboard_to_ascii_inst/ascii[7]}]]
+connect_debug_port u_ila_0/probe1 [get_nets [list {qy[0]} {qy[1]} {qy[2]} {qy[3]} {qy[4]} {qy[5]} {qy[6]} {qy[7]}]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe2]
-set_property port_width 5 [get_debug_ports u_ila_0/probe2]
-connect_debug_port u_ila_0/probe2 [get_nets [list {uart_user_logic_inst/shiftcount[0]} {uart_user_logic_inst/shiftcount[1]} {uart_user_logic_inst/shiftcount[2]} {uart_user_logic_inst/shiftcount[3]} {uart_user_logic_inst/shiftcount[4]}]]
+set_property port_width 1 [get_debug_ports u_ila_0/probe2]
+connect_debug_port u_ila_0/probe2 [get_nets [list enx]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe3]
-set_property port_width 128 [get_debug_ports u_ila_0/probe3]
-connect_debug_port u_ila_0/probe3 [get_nets [list {LCD_data[0]} {LCD_data[1]} {LCD_data[2]} {LCD_data[3]} {LCD_data[4]} {LCD_data[5]} {LCD_data[6]} {LCD_data[7]} {LCD_data[8]} {LCD_data[9]} {LCD_data[10]} {LCD_data[11]} {LCD_data[12]} {LCD_data[13]} {LCD_data[14]} {LCD_data[15]} {LCD_data[16]} {LCD_data[17]} {LCD_data[18]} {LCD_data[19]} {LCD_data[20]} {LCD_data[21]} {LCD_data[22]} {LCD_data[23]} {LCD_data[24]} {LCD_data[25]} {LCD_data[26]} {LCD_data[27]} {LCD_data[28]} {LCD_data[29]} {LCD_data[30]} {LCD_data[31]} {LCD_data[32]} {LCD_data[33]} {LCD_data[34]} {LCD_data[35]} {LCD_data[36]} {LCD_data[37]} {LCD_data[38]} {LCD_data[39]} {LCD_data[40]} {LCD_data[41]} {LCD_data[42]} {LCD_data[43]} {LCD_data[44]} {LCD_data[45]} {LCD_data[46]} {LCD_data[47]} {LCD_data[48]} {LCD_data[49]} {LCD_data[50]} {LCD_data[51]} {LCD_data[52]} {LCD_data[53]} {LCD_data[54]} {LCD_data[55]} {LCD_data[56]} {LCD_data[57]} {LCD_data[58]} {LCD_data[59]} {LCD_data[60]} {LCD_data[61]} {LCD_data[62]} {LCD_data[63]} {LCD_data[64]} {LCD_data[65]} {LCD_data[66]} {LCD_data[67]} {LCD_data[68]} {LCD_data[69]} {LCD_data[70]} {LCD_data[71]} {LCD_data[72]} {LCD_data[73]} {LCD_data[74]} {LCD_data[75]} {LCD_data[76]} {LCD_data[77]} {LCD_data[78]} {LCD_data[79]} {LCD_data[80]} {LCD_data[81]} {LCD_data[82]} {LCD_data[83]} {LCD_data[84]} {LCD_data[85]} {LCD_data[86]} {LCD_data[87]} {LCD_data[88]} {LCD_data[89]} {LCD_data[90]} {LCD_data[91]} {LCD_data[92]} {LCD_data[93]} {LCD_data[94]} {LCD_data[95]} {LCD_data[96]} {LCD_data[97]} {LCD_data[98]} {LCD_data[99]} {LCD_data[100]} {LCD_data[101]} {LCD_data[102]} {LCD_data[103]} {LCD_data[104]} {LCD_data[105]} {LCD_data[106]} {LCD_data[107]} {LCD_data[108]} {LCD_data[109]} {LCD_data[110]} {LCD_data[111]} {LCD_data[112]} {LCD_data[113]} {LCD_data[114]} {LCD_data[115]} {LCD_data[116]} {LCD_data[117]} {LCD_data[118]} {LCD_data[119]} {LCD_data[120]} {LCD_data[121]} {LCD_data[122]} {LCD_data[123]} {LCD_data[124]} {LCD_data[125]} {LCD_data[126]} {LCD_data[127]}]]
+set_property port_width 1 [get_debug_ports u_ila_0/probe3]
+connect_debug_port u_ila_0/probe3 [get_nets [list eny]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe4]
-set_property port_width 16 [get_debug_ports u_ila_0/probe4]
-connect_debug_port u_ila_0/probe4 [get_nets [list {data_s[0]} {data_s[1]} {data_s[2]} {data_s[3]} {data_s[4]} {data_s[5]} {data_s[6]} {data_s[7]} {data_s[8]} {data_s[9]} {data_s[10]} {data_s[11]} {data_s[12]} {data_s[13]} {data_s[14]} {data_s[15]}]]
+set_property port_width 1 [get_debug_ports u_ila_0/probe4]
+connect_debug_port u_ila_0/probe4 [get_nets [list upx]]
 create_debug_port u_ila_0 probe
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe5]
-set_property port_width 136 [get_debug_ports u_ila_0/probe5]
-connect_debug_port u_ila_0/probe5 [get_nets [list {uart_user_logic_inst/sr_out[0]} {uart_user_logic_inst/sr_out[1]} {uart_user_logic_inst/sr_out[2]} {uart_user_logic_inst/sr_out[3]} {uart_user_logic_inst/sr_out[4]} {uart_user_logic_inst/sr_out[5]} {uart_user_logic_inst/sr_out[6]} {uart_user_logic_inst/sr_out[7]} {uart_user_logic_inst/sr_out[8]} {uart_user_logic_inst/sr_out[9]} {uart_user_logic_inst/sr_out[10]} {uart_user_logic_inst/sr_out[11]} {uart_user_logic_inst/sr_out[12]} {uart_user_logic_inst/sr_out[13]} {uart_user_logic_inst/sr_out[14]} {uart_user_logic_inst/sr_out[15]} {uart_user_logic_inst/sr_out[16]} {uart_user_logic_inst/sr_out[17]} {uart_user_logic_inst/sr_out[18]} {uart_user_logic_inst/sr_out[19]} {uart_user_logic_inst/sr_out[20]} {uart_user_logic_inst/sr_out[21]} {uart_user_logic_inst/sr_out[22]} {uart_user_logic_inst/sr_out[23]} {uart_user_logic_inst/sr_out[24]} {uart_user_logic_inst/sr_out[25]} {uart_user_logic_inst/sr_out[26]} {uart_user_logic_inst/sr_out[27]} {uart_user_logic_inst/sr_out[28]} {uart_user_logic_inst/sr_out[29]} {uart_user_logic_inst/sr_out[30]} {uart_user_logic_inst/sr_out[31]} {uart_user_logic_inst/sr_out[32]} {uart_user_logic_inst/sr_out[33]} {uart_user_logic_inst/sr_out[34]} {uart_user_logic_inst/sr_out[35]} {uart_user_logic_inst/sr_out[36]} {uart_user_logic_inst/sr_out[37]} {uart_user_logic_inst/sr_out[38]} {uart_user_logic_inst/sr_out[39]} {uart_user_logic_inst/sr_out[40]} {uart_user_logic_inst/sr_out[41]} {uart_user_logic_inst/sr_out[42]} {uart_user_logic_inst/sr_out[43]} {uart_user_logic_inst/sr_out[44]} {uart_user_logic_inst/sr_out[45]} {uart_user_logic_inst/sr_out[46]} {uart_user_logic_inst/sr_out[47]} {uart_user_logic_inst/sr_out[48]} {uart_user_logic_inst/sr_out[49]} {uart_user_logic_inst/sr_out[50]} {uart_user_logic_inst/sr_out[51]} {uart_user_logic_inst/sr_out[52]} {uart_user_logic_inst/sr_out[53]} {uart_user_logic_inst/sr_out[54]} {uart_user_logic_inst/sr_out[55]} {uart_user_logic_inst/sr_out[56]} {uart_user_logic_inst/sr_out[57]} {uart_user_logic_inst/sr_out[58]} {uart_user_logic_inst/sr_out[59]} {uart_user_logic_inst/sr_out[60]} {uart_user_logic_inst/sr_out[61]} {uart_user_logic_inst/sr_out[62]} {uart_user_logic_inst/sr_out[63]} {uart_user_logic_inst/sr_out[64]} {uart_user_logic_inst/sr_out[65]} {uart_user_logic_inst/sr_out[66]} {uart_user_logic_inst/sr_out[67]} {uart_user_logic_inst/sr_out[68]} {uart_user_logic_inst/sr_out[69]} {uart_user_logic_inst/sr_out[70]} {uart_user_logic_inst/sr_out[71]} {uart_user_logic_inst/sr_out[72]} {uart_user_logic_inst/sr_out[73]} {uart_user_logic_inst/sr_out[74]} {uart_user_logic_inst/sr_out[75]} {uart_user_logic_inst/sr_out[76]} {uart_user_logic_inst/sr_out[77]} {uart_user_logic_inst/sr_out[78]} {uart_user_logic_inst/sr_out[79]} {uart_user_logic_inst/sr_out[80]} {uart_user_logic_inst/sr_out[81]} {uart_user_logic_inst/sr_out[82]} {uart_user_logic_inst/sr_out[83]} {uart_user_logic_inst/sr_out[84]} {uart_user_logic_inst/sr_out[85]} {uart_user_logic_inst/sr_out[86]} {uart_user_logic_inst/sr_out[87]} {uart_user_logic_inst/sr_out[88]} {uart_user_logic_inst/sr_out[89]} {uart_user_logic_inst/sr_out[90]} {uart_user_logic_inst/sr_out[91]} {uart_user_logic_inst/sr_out[92]} {uart_user_logic_inst/sr_out[93]} {uart_user_logic_inst/sr_out[94]} {uart_user_logic_inst/sr_out[95]} {uart_user_logic_inst/sr_out[96]} {uart_user_logic_inst/sr_out[97]} {uart_user_logic_inst/sr_out[98]} {uart_user_logic_inst/sr_out[99]} {uart_user_logic_inst/sr_out[100]} {uart_user_logic_inst/sr_out[101]} {uart_user_logic_inst/sr_out[102]} {uart_user_logic_inst/sr_out[103]} {uart_user_logic_inst/sr_out[104]} {uart_user_logic_inst/sr_out[105]} {uart_user_logic_inst/sr_out[106]} {uart_user_logic_inst/sr_out[107]} {uart_user_logic_inst/sr_out[108]} {uart_user_logic_inst/sr_out[109]} {uart_user_logic_inst/sr_out[110]} {uart_user_logic_inst/sr_out[111]} {uart_user_logic_inst/sr_out[112]} {uart_user_logic_inst/sr_out[113]} {uart_user_logic_inst/sr_out[114]} {uart_user_logic_inst/sr_out[115]} {uart_user_logic_inst/sr_out[116]} {uart_user_logic_inst/sr_out[117]} {uart_user_logic_inst/sr_out[118]} {uart_user_logic_inst/sr_out[119]} {uart_user_logic_inst/sr_out[120]} {uart_user_logic_inst/sr_out[121]} {uart_user_logic_inst/sr_out[122]} {uart_user_logic_inst/sr_out[123]} {uart_user_logic_inst/sr_out[124]} {uart_user_logic_inst/sr_out[125]} {uart_user_logic_inst/sr_out[126]} {uart_user_logic_inst/sr_out[127]} {uart_user_logic_inst/sr_out[128]} {uart_user_logic_inst/sr_out[129]} {uart_user_logic_inst/sr_out[130]} {uart_user_logic_inst/sr_out[131]} {uart_user_logic_inst/sr_out[132]} {uart_user_logic_inst/sr_out[133]} {uart_user_logic_inst/sr_out[134]} {uart_user_logic_inst/sr_out[135]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe6]
-set_property port_width 8 [get_debug_ports u_ila_0/probe6]
-connect_debug_port u_ila_0/probe6 [get_nets [list {uart_user_logic_inst/rx_data[0]} {uart_user_logic_inst/rx_data[1]} {uart_user_logic_inst/rx_data[2]} {uart_user_logic_inst/rx_data[3]} {uart_user_logic_inst/rx_data[4]} {uart_user_logic_inst/rx_data[5]} {uart_user_logic_inst/rx_data[6]} {uart_user_logic_inst/rx_data[7]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe7]
-set_property port_width 3 [get_debug_ports u_ila_0/probe7]
-connect_debug_port u_ila_0/probe7 [get_nets [list {mode[0]} {mode[1]} {mode[2]}]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe8]
-set_property port_width 1 [get_debug_ports u_ila_0/probe8]
-connect_debug_port u_ila_0/probe8 [get_nets [list ps2_keyboard_to_ascii_inst/ascii_new_pulse]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe9]
-set_property port_width 1 [get_debug_ports u_ila_0/probe9]
-connect_debug_port u_ila_0/probe9 [get_nets [list ps2_keyboard_to_ascii_inst/ps2_clk]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe10]
-set_property port_width 1 [get_debug_ports u_ila_0/probe10]
-connect_debug_port u_ila_0/probe10 [get_nets [list ps2_keyboard_to_ascii_inst/ps2_data]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe11]
-set_property port_width 1 [get_debug_ports u_ila_0/probe11]
-connect_debug_port u_ila_0/probe11 [get_nets [list uart_user_logic_inst/rx_full]]
-create_debug_port u_ila_0 probe
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe12]
-set_property port_width 1 [get_debug_ports u_ila_0/probe12]
-connect_debug_port u_ila_0/probe12 [get_nets [list uart_user_logic_inst/shift_trig]]
+set_property port_width 1 [get_debug_ports u_ila_0/probe5]
+connect_debug_port u_ila_0/probe5 [get_nets [list upy]]
 set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]
 set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]
 set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]
-connect_debug_port dbg_hub/clk [get_nets iCLK_IBUF_BUFG]
+connect_debug_port dbg_hub/clk [get_nets clk_125mhz_IBUF_BUFG]
