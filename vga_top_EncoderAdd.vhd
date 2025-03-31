@@ -106,7 +106,7 @@ attribute mark_debug of eny     : signal is "true";
 attribute mark_debug of enx     : signal is "true";
 attribute mark_debug of upy     : signal is "true";
 attribute mark_debug of upx     : signal is "true";
-attribute mark_debug of clk_125mhz     : signal is "true";
+
 begin
   system_reset <= reset_d or reset;
   -- Clock divider: 125MHz -> 25MHz (for VGA timing)
@@ -166,7 +166,7 @@ begin
       en      => enx
     );
   inst_Ax : btn_debounce_toggle
-  generic map(CNTR_MAX => X"000F") -- X'FFFF" for implementation       
+  generic map(CNTR_MAX => X"FFFF") -- X'FFFF" for implementation       
   port map
   (
     BTN_I    => Ax,
@@ -177,7 +177,7 @@ begin
   );
 
   inst_Bx : btn_debounce_toggle
-  generic map(CNTR_MAX => X"000F") -- X'FFFF" for implementation       
+  generic map(CNTR_MAX => X"FFFF") -- X'FFFF" for implementation       
   port map
   (
     BTN_I    => Bx,
@@ -198,7 +198,7 @@ begin
       en      => eny
     );
   inst_Ay : btn_debounce_toggle
-  generic map(CNTR_MAX => X"000F") -- X'FFFF" for implementation       
+  generic map(CNTR_MAX => X"FFFF") -- X'FFFF" for implementation       
   port map
   (
     BTN_I    => Ay,
@@ -209,7 +209,7 @@ begin
   );
 
   inst_By : btn_debounce_toggle
-  generic map(CNTR_MAX => X"000F") -- X'FFFF" for implementation       
+  generic map(CNTR_MAX => X"FFFF") -- X'FFFF" for implementation       
   port map
   (
     BTN_I    => By,
@@ -234,7 +234,7 @@ begin
       load     => '0',
       en       => enx,
       up       => upx,
-      clk_en   => clk_125mhz,
+      clk_en   => '1',
       d        => (others => '0'),
       max_tick => open,
       min_tick => open,
@@ -254,7 +254,7 @@ begin
       load     => '0',
       en       => eny,
       up       => upy,
-      clk_en   => clk_125mhz,
+      clk_en   => '1',
       d        => (others => '0'),
       max_tick => open,
       min_tick => open,

@@ -41,7 +41,7 @@ def process_image(input_path, output_image_path, output_coe_path):
 
 # --- Example Usage ---
 if __name__ == "__main__":
-    input_image = "test_image.jpeg"       # Your input image (any size)
+    input_image = "white.jpg"       # Your input image (any size)
     output_256x256 = "output_256x256.jpg" # Resized 256x256 image
     output_coe = "vga_image.coe"          # COE file for BRAM
     
