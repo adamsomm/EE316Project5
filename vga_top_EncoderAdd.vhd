@@ -99,6 +99,14 @@ architecture Structural of vga_top_EncoderAdd is
 
   signal system_reset : std_logic := '0';
 
+attribute mark_debug : string; 
+attribute mark_debug of qx     : signal is "true";
+attribute mark_debug of qy     : signal is "true";
+attribute mark_debug of eny     : signal is "true";
+attribute mark_debug of enx     : signal is "true";
+attribute mark_debug of upy     : signal is "true";
+attribute mark_debug of upx     : signal is "true";
+attribute mark_debug of clk_125mhz     : signal is "true";
 begin
   system_reset <= reset_d or reset;
   -- Clock divider: 125MHz -> 25MHz (for VGA timing)
