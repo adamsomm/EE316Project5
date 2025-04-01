@@ -4,9 +4,12 @@ use IEEE.NUMERIC_STD.all;
 
 entity TopLevelwController is
   generic (
-    N  : integer := 9;
-    N2 : integer := 359;
-    N1 : integer := 0);
+    N                         : integer := 9;
+    N2                        : integer := 359;
+    N1                        : integer := 0;
+    clk_freq                  : integer := 125_000_000;
+    ps2_debounce_counter_size : integer := 10
+  );
   port (
     clk_125mhz : in std_logic; -- 125 MHz input clock
     reset      : in std_logic;
@@ -14,6 +17,8 @@ entity TopLevelwController is
     Ay         : in std_logic;
     Bx         : in std_logic;
     By         : in std_logic;
+    ps2_clk    : in std_logic;
+    ps2_data   : in std_logic;
     -- VGA output signals
     vga_hsync : out std_logic;
     vga_vsync : out std_logic;
@@ -79,6 +84,21 @@ architecture Structural of TopLevelwController is
       doutb : out std_logic_vector(11 downto 0)
     );
   end component;
+
+  component ps2_keyboard_to_ascii
+    generic (
+      clk_freq                  : integer := 125_000_000;
+      ps2_debounce_counter_size : integer := 10
+    );
+    port (
+      clk             : in std_logic;
+      ps2_clk         : in std_logic;
+      ps2_data        : in std_logic;
+      ascii_new_pulse : out std_logic;
+      ascii_code      : out std_logic_vector(7 downto 0)
+    );
+  end component;
+
   component vga_controller
     port (
       clk_125mhz : in std_logic;
@@ -97,13 +117,15 @@ architecture Structural of TopLevelwController is
 
   component ControllerStateMachine
     port (
-      clk        : in std_logic;
-      reset      : in std_logic;
-      qx         : in std_logic_vector(8 downto 0);
-      qy         : in std_logic_vector(8 downto 0);
+      clk           : in std_logic;
+      reset         : in std_logic;
+      qx            : in std_logic_vector(8 downto 0);
+      qy            : in std_logic_vector(8 downto 0);
+      kp_pulse      : in std_logic;
+      keyPress      : in std_logic_vector(7 downto 0);
       SETResolution : out integer;
-      RAMaddress : out std_logic_vector(16 downto 0);
-      RAMdata    : out std_logic_vector(11 downto 0)
+      RAMaddress    : out std_logic_vector(16 downto 0);
+      RAMdata       : out std_logic_vector(11 downto 0)
     );
   end component;
 
@@ -125,11 +147,13 @@ architecture Structural of TopLevelwController is
   signal clk_counter   : integer range 0 to CLK_DIVIDER - 1 := 0;
   signal pixel_en      : std_logic;
   -- RAM interface signals
-  signal ram_addr_porta : std_logic_vector(16 downto 0);
-  signal ram_data_porta : std_logic_vector(11 downto 0);
-  signal ram_addr_portb : std_logic_vector(16 downto 0);
-  signal ram_data_portb : std_logic_vector(11 downto 0);
-  signal resolution     : integer := 256;
+  signal ram_addr_porta  : std_logic_vector(16 downto 0);
+  signal ram_data_porta  : std_logic_vector(11 downto 0);
+  signal ram_addr_portb  : std_logic_vector(16 downto 0);
+  signal ram_data_portb  : std_logic_vector(11 downto 0);
+  signal resolution      : integer := 256;
+  signal ascii_code      : std_logic_vector(7 downto 0); -- ASCII code from PS2 keyboard
+  signal ascii_new_pulse : std_logic; -- Pulse indicating a new ASCII character is available
   --   attribute mark_debug : string; 
   -- attribute mark_debug of qx     : signal is "true";
   -- attribute mark_debug of qy     : signal is "true";
@@ -157,17 +181,32 @@ begin
   end process;
 
   ControllerStateMachine_inst : ControllerStateMachine
-    port map
-    (
-      clk        => clk_125mhz,
-      reset      => system_reset,
-      qx         => qx,
-      qy         => qy,
-      SETResolution => resolution,
-      RAMaddress => ram_addr_porta,
-      RAMdata    => ram_data_porta
-    );
+  port map
+  (
+    clk           => clk_125mhz,
+    reset         => system_reset,
+    qx            => qx,
+    qy            => qy,
+    kp_pulse      => ascii_new_pulse,
+    keyPress      => ascii_code,
+    SETResolution => resolution,
+    RAMaddress    => ram_addr_porta,
+    RAMdata       => ram_data_porta
+  );
 
+  ps2_keyboard_to_ascii_inst : ps2_keyboard_to_ascii
+  generic map(
+    clk_freq                  => clk_freq,
+    ps2_debounce_counter_size => ps2_debounce_counter_size
+  )
+  port map
+  (
+    clk             => clk_125mhz,
+    ps2_clk         => ps2_clk,
+    ps2_data        => ps2_data,
+    ascii_new_pulse => ascii_new_pulse,
+    ascii_code      => ascii_code
+  );
   -- Instantiate the dual-port RAM
   ram_inst : blk_mem_gen_0
   port map
