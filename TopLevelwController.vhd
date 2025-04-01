@@ -4,8 +4,8 @@ use IEEE.NUMERIC_STD.all;
 
 entity TopLevelwController is
   generic (
-    N  : integer := 8;
-    N2 : integer := 255;
+    N  : integer := 9;
+    N2 : integer := 359;
     N1 : integer := 0);
   port (
     clk_125mhz : in std_logic; -- 125 MHz input clock
@@ -53,8 +53,8 @@ architecture Structural of TopLevelwController is
   end component;
   component univ_bin_counter is
     generic (
-      N  : integer := 8;
-      N2 : integer := 255;
+      N  : integer := 9;
+      N2 : integer := 359;
       N1 : integer := 0);
     port (
       clk, reset            : in std_logic;
@@ -71,11 +71,11 @@ architecture Structural of TopLevelwController is
       -- Port A (Write)
       clka  : in std_logic;
       wea   : in std_logic_vector(0 downto 0);
-      addra : in std_logic_vector(15 downto 0);
+      addra : in std_logic_vector(16 downto 0);
       dina  : in std_logic_vector(11 downto 0);
       -- Port B (Read) 
       clkb  : in std_logic;
-      addrb : in std_logic_vector(15 downto 0);
+      addrb : in std_logic_vector(16 downto 0);
       doutb : out std_logic_vector(11 downto 0)
     );
   end component;
@@ -84,12 +84,13 @@ architecture Structural of TopLevelwController is
       clk_125mhz : in std_logic;
       pix_en     : in std_logic;
       reset      : in std_logic;
+      res        : in integer;
       vga_hsync  : out std_logic;
       vga_vsync  : out std_logic;
       vga_red    : out std_logic_vector(3 downto 0);
       vga_green  : out std_logic_vector(3 downto 0);
       vga_blue   : out std_logic_vector(3 downto 0);
-      bram_addr  : out std_logic_vector(15 downto 0);
+      bram_addr  : out std_logic_vector(16 downto 0);
       bram_data  : in std_logic_vector(11 downto 0)
     );
   end component;
@@ -98,9 +99,10 @@ architecture Structural of TopLevelwController is
     port (
       clk        : in std_logic;
       reset      : in std_logic;
-      qx         : in std_logic_vector(7 downto 0);
-      qy         : in std_logic_vector(7 downto 0);
-      RAMaddress : out std_logic_vector(15 downto 0);
+      qx         : in std_logic_vector(8 downto 0);
+      qy         : in std_logic_vector(8 downto 0);
+      SETResolution : out integer;
+      RAMaddress : out std_logic_vector(16 downto 0);
       RAMdata    : out std_logic_vector(11 downto 0)
     );
   end component;
@@ -123,10 +125,11 @@ architecture Structural of TopLevelwController is
   signal clk_counter   : integer range 0 to CLK_DIVIDER - 1 := 0;
   signal pixel_en      : std_logic;
   -- RAM interface signals
-  signal ram_addr_porta : std_logic_vector(15 downto 0);
+  signal ram_addr_porta : std_logic_vector(16 downto 0);
   signal ram_data_porta : std_logic_vector(11 downto 0);
-  signal ram_addr_portb : std_logic_vector(15 downto 0);
+  signal ram_addr_portb : std_logic_vector(16 downto 0);
   signal ram_data_portb : std_logic_vector(11 downto 0);
+  signal resolution     : integer := 256;
   --   attribute mark_debug : string; 
   -- attribute mark_debug of qx     : signal is "true";
   -- attribute mark_debug of qy     : signal is "true";
@@ -160,6 +163,7 @@ begin
       reset      => system_reset,
       qx         => qx,
       qy         => qy,
+      SETResolution => resolution,
       RAMaddress => ram_addr_porta,
       RAMdata    => ram_data_porta
     );
@@ -186,6 +190,7 @@ begin
     clk_125mhz => clk_125mhz,
     pix_en     => pixel_en,
     reset      => reset,
+    res        => resolution,
     vga_hsync  => vga_hsync,
     vga_vsync  => vga_vsync,
     vga_red    => vga_red,

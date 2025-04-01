@@ -7,12 +7,13 @@ entity vga_controller is
         clk_125mhz : in  std_logic;
         pix_en     : in  std_logic;
         reset      : in  std_logic;
+        res        : in integer;
         vga_hsync  : out std_logic;
         vga_vsync  : out std_logic;
         vga_red    : out std_logic_vector(3 downto 0);
         vga_green  : out std_logic_vector(3 downto 0);
         vga_blue   : out std_logic_vector(3 downto 0);
-        bram_addr  : out std_logic_vector(15 downto 0);
+        bram_addr  : out std_logic_vector(16 downto 0);
         bram_data  : in  std_logic_vector(11 downto 0)
     );
 end vga_controller;
@@ -32,10 +33,10 @@ architecture Behavioral of vga_controller is
     constant V_TOTAL   : integer := V_DISPLAY + V_FP + V_SYNC + V_BP;
     
     -- Image positioning
-    constant IMG_WIDTH  : integer := 256;
-    constant IMG_HEIGHT : integer := 256;
-    constant H_START    : integer := (H_DISPLAY - IMG_WIDTH)/2;
-    constant V_START    : integer := (V_DISPLAY - IMG_HEIGHT)/2;
+    signal IMG_WIDTH  : integer := 256;-- change this dynamically
+    signal IMG_HEIGHT : integer := 256;-- change this 
+    signal H_START    : integer := (H_DISPLAY - IMG_WIDTH)/2;--make a signal
+    signal V_START    : integer := (V_DISPLAY - IMG_HEIGHT)/2;-- make a signal
     
     -- Internal signals
     signal h_counter    : integer range 0 to H_TOTAL-1 := 0;
@@ -46,6 +47,10 @@ architecture Behavioral of vga_controller is
     signal blank        : std_logic;
     
 begin
+    IMG_WIDTH <= res;
+    IMG_HEIGHT <= res;
+    H_START    <= (H_DISPLAY - IMG_WIDTH)/2;--make a signal
+    V_START    <= (V_DISPLAY - IMG_HEIGHT)/2;-- make a signal
     -- VGA timing generation process
     process(clk_125mhz, reset)
         variable bram_x, bram_y : integer;
@@ -101,7 +106,7 @@ begin
                    (v_counter >= V_START) and (v_counter < V_START + IMG_HEIGHT) then
                     bram_x := h_counter - H_START;
                     bram_y := v_counter - V_START;
-                    bram_addr <= std_logic_vector(to_unsigned(bram_y * IMG_WIDTH + bram_x, 16));
+                    bram_addr <= std_logic_vector(to_unsigned(bram_y * IMG_WIDTH + bram_x, 17));
                     rgb <= bram_data;
                 else
                     bram_addr <= (others => '0');

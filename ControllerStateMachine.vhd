@@ -6,13 +6,14 @@ entity ControllerStateMachine is
   port (
     clk   : in std_logic;
     reset : in std_logic;
-    qx    : in std_logic_vector(7 downto 0);
-    qy    : in std_logic_vector(7 downto 0);
+    qx    : in std_logic_vector(8 downto 0);
+    qy    : in std_logic_vector(8 downto 0);
     -- kp_pulse   : in std_logic;
     -- keyPress   : in std_logic;
     -- LCDoutput  : out std_logic_vector(7 downto 0);
     -- color      : out std_logic_vector(11 downto 0);
-    RAMaddress : out std_logic_vector(15 downto 0);
+    SETResolution         : out integer := 256;
+    RAMaddress : out std_logic_vector(16 downto 0);
     RAMdata    : out std_logic_vector(11 downto 0)
   );
 end ControllerStateMachine;
@@ -26,20 +27,21 @@ architecture Behavioral of ControllerStateMachine is
   type Screen_Size is (Standard, Double);
   signal Screen_Resulution : Screen_Size := Standard;
 
-  signal Resolution     : integer                       := 256;
+  signal Resolution     : integer                       := 360;
   constant DefaultColor : std_logic_vector(11 downto 0) := X"FFF"; -- Default color for the display
   signal resetCount     : integer                       := 0;
   signal color          : std_logic_vector(11 downto 0) := X"F00";
   signal cursorCounter  : integer                       := 0;
 
 begin
+SETResolution <= Resolution;
   -- Next state logic process
   process (current_state, qx, qy, clk, reset)
-    variable temp_addr  : unsigned(15 downto 0) := X"FF00";
-    variable x_unsigned : unsigned(7 downto 0)  := X"00";
-    variable y_unsigned : unsigned(7 downto 0)  := X"F0";
-    constant MAX_Y      : unsigned(7 downto 0)  := to_unsigned(Resolution - 1, 8);
-    constant MAX_X      : unsigned(7 downto 0)  := to_unsigned(Resolution - 1, 8);
+    variable temp_addr  : unsigned(16 downto 0);
+    variable x_unsigned : unsigned(8 downto 0);
+    variable y_unsigned : unsigned(8 downto 0);  
+    constant MAX_Y      : unsigned(8 downto 0)  := to_unsigned(Resolution - 1, 9);
+    constant MAX_X      : unsigned(8 downto 0)  := to_unsigned(Resolution - 1, 9);
     variable x_offset   : integer               := 0;
     variable y_offset   : integer               := 0;
   begin
@@ -82,7 +84,9 @@ begin
               -- LCDoutput <= "Cursor Size 1"; -- convert to std_logic_vector in hex
               x_unsigned := unsigned(qx);
               y_unsigned := MAX_Y - unsigned(qy);
-              temp_addr  := y_unsigned & x_unsigned;
+--              temp_addr := (y_unsigned * to_unsigned(Resolution, 9)) + x_unsigned;
+              temp_addr := resize(y_unsigned * to_unsigned(Resolution, 9), 17) + x_unsigned; -- Drops MSB if needed
+
 
               -- Output assignments
               RAMaddress <= std_logic_vector(temp_addr);
@@ -108,7 +112,8 @@ begin
                   unsigned(qy) + y_offset    <= MAX_Y then
                   x_unsigned := unsigned(qx) + x_offset;
                   y_unsigned := MAX_Y - (unsigned(qy) + y_offset);
-                  temp_addr  := y_unsigned & x_unsigned;
+--                  temp_addr  := y_unsigned & x_unsigned;
+                  temp_addr := resize(y_unsigned * to_unsigned(Resolution, 9), 17) + x_unsigned;
                   RAMaddress <= std_logic_vector(temp_addr);
                   RAMdata    <= color;
                 end if;
@@ -149,7 +154,8 @@ begin
                   unsigned(qy) + y_offset    <= MAX_Y then
                   x_unsigned := unsigned(qx) + x_offset;
                   y_unsigned := MAX_Y - (unsigned(qy) + y_offset);
-                  temp_addr  := y_unsigned & x_unsigned;
+--                  temp_addr  := y_unsigned & x_unsigned;
+                  temp_addr := resize(y_unsigned * to_unsigned(Resolution, 9), 17) + x_unsigned;
                   RAMaddress <= std_logic_vector(temp_addr);
                   RAMdata    <= color;
                 end if;
