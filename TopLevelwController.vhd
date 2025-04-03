@@ -8,7 +8,9 @@ entity TopLevelwController is
     N2                        : integer := 359;
     N1                        : integer := 0;
     clk_freq                  : integer := 125_000_000;
-    ps2_debounce_counter_size : integer := 10
+    ps2_debounce_counter_size : integer := 10;
+    input_clk : integer := 125_000_000;
+    bus_clk   : integer := 50_000 -- speed the i2c bus (scl) will run at in Hz
   );
   port (
     clk_125mhz : in std_logic; -- 125 MHz input clock
@@ -24,7 +26,9 @@ entity TopLevelwController is
     vga_vsync : out std_logic;
     vga_red   : out std_logic_vector(3 downto 0);
     vga_green : out std_logic_vector(3 downto 0);
-    vga_blue  : out std_logic_vector(3 downto 0)
+    vga_blue  : out std_logic_vector(3 downto 0);
+    scl       : inout std_logic; -- I2C clock line
+    sda       : inout std_logic -- I2C data line
   );
 end TopLevelwController;
 
@@ -125,7 +129,22 @@ architecture Structural of TopLevelwController is
       keyPress      : in std_logic_vector(7 downto 0);
       SETResolution : out integer;
       RAMaddress    : out std_logic_vector(16 downto 0);
-      RAMdata       : out std_logic_vector(11 downto 0)
+      RAMdata       : out std_logic_vector(11 downto 0);
+      LCD_data      : out std_logic_vector(127 downto 0)
+    );
+  end component;
+
+  component LCD_I2C_user_logic
+    generic (
+      input_clk : integer := 125_000_000;
+      bus_clk   : integer := 50_000 -- speed the i2c bus (scl) will run at in Hz
+    );
+    port (
+      clk     : in std_logic;
+      reset   : in std_logic;
+      data_in : in std_logic_vector(127 downto 0);
+      scl     : inout std_logic;
+      sda     : inout std_logic
     );
   end component;
 
@@ -154,8 +173,9 @@ architecture Structural of TopLevelwController is
   signal resolution      : integer := 256;
   signal ascii_code      : std_logic_vector(7 downto 0); -- ASCII code from PS2 keyboard
   signal ascii_new_pulse : std_logic; -- Pulse indicating a new ASCII character is available
-  --   attribute mark_debug : string; 
-  -- attribute mark_debug of qx     : signal is "true";
+  signal LCD_data        : std_logic_vector(127 downto 0); -- Data to be sent to the LCD
+     attribute mark_debug : string; 
+   attribute mark_debug of ascii_new_pulse     : signal is "true";
   -- attribute mark_debug of qy     : signal is "true";
   -- attribute mark_debug of eny     : signal is "true";
   -- attribute mark_debug of enx     : signal is "true";
@@ -180,6 +200,20 @@ begin
     end if;
   end process;
 
+  LCD_I2C_user_logic_inst : LCD_I2C_user_logic
+  generic map(
+    input_clk => input_clk,
+    bus_clk   => bus_clk
+  )
+  port map
+  (
+    clk     => clk_125mhz,
+    reset   => system_reset,
+    data_in => LCD_data,
+    scl     => scl,
+    sda     => sda
+  );
+
   ControllerStateMachine_inst : ControllerStateMachine
   port map
   (
@@ -191,7 +225,8 @@ begin
     keyPress      => ascii_code,
     SETResolution => resolution,
     RAMaddress    => ram_addr_porta,
-    RAMdata       => ram_data_porta
+    RAMdata       => ram_data_porta,
+    LCD_data      => LCD_data
   );
 
   ps2_keyboard_to_ascii_inst : ps2_keyboard_to_ascii

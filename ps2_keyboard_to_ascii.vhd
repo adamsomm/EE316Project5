@@ -90,6 +90,7 @@ BEGIN
       
         --ready state: wait for a new PS2 code to be received
         WHEN ready =>
+            ascii_new_pulse <= '0';
           IF(prev_ps2_code_new = '0' AND ps2_code_new = '1') THEN --new PS2 code received
             ascii_new <= '0';                                       --reset new ASCII code indicator
             state <= new_code;                                      --proceed to new_code state
@@ -318,15 +319,18 @@ BEGIN
           IF(ascii(7) = '0') THEN            --the PS2 code has an ASCII output
             ascii_new <= '1';                  --set flag indicating new ASCII output
             --ascii_code <=  ascii;   --output the ASCII value
-            if count >= 130208 then  -- End of baud rate cycle
-                    ascii_new_pulse <= '0';  -- Set baudPulse low
-                    count := 0;        -- Reset the counter
-                    state <= ready;
-                else
-                    ascii_new_pulse <= '1';  -- Keep baudPulse high during the cycle
-                    ascii_code <=  ascii;
-                    count := count + 1; -- Increment the counter
-                end if;
+--            if count >= 130208 then  -- End of baud rate cycle
+--                    ascii_new_pulse <= '0';  -- Set baudPulse low
+--                    count := 0;        -- Reset the counter
+--                    state <= ready;
+--                else
+--                    ascii_new_pulse <= '1';  -- Keep baudPulse high during the cycle
+--                    ascii_code <=  ascii;
+--                    count := count + 1; -- Increment the counter
+--                end if;
+            ascii_new_pulse <= '1';  -- Keep baudPulse high during the cycle
+            ascii_code <=  ascii;
+            state <= ready;
           END IF;
 --          state <= ready;                    --return to ready state to await next PS2 code
 

@@ -10,26 +10,26 @@ entity ControllerStateMachine is
     qy       : in std_logic_vector(8 downto 0);
     kp_pulse : in std_logic;
     keyPress : in std_logic_vector(7 downto 0);
-    -- LCDoutput  : out std_logic_vector(7 downto 0);
     -- color      : out std_logic_vector(11 downto 0);
     SETResolution : out integer := 256;
     RAMaddress    : out std_logic_vector(16 downto 0);
-    RAMdata       : out std_logic_vector(11 downto 0)
+    RAMdata       : out std_logic_vector(11 downto 0);
+    LCD_data      : out std_logic_vector(127 downto 0)
   );
 end ControllerStateMachine;
 
 architecture Behavioral of ControllerStateMachine is
   -- Define state type
-  type state_type is (Ready, Draw, Command, Text, Refresh);
+  type state_type is (Ready, Draw, Command, Write, Refresh);
   signal current_state : state_type;
   type Cursor_Size is (One, Two, Three);
-  signal Current_Size : Cursor_Size := Three;
-  type Screen_Size is (Standard, Double);
+  signal Current_Size : Cursor_Size := One;
+  type Screen_Size is (Standard, Twice);
   signal Screen_Resulution : Screen_Size := Standard;
   type keyboard is (brushColor, brushWidth, screenSize);
   signal CommandPress : keyboard := brushColor;
 
-  signal Resolution     : integer                       := 360;
+  signal Resolution     : integer                       := 256;
   constant DefaultColor : std_logic_vector(11 downto 0) := X"FFF"; -- Default color for the display
   signal resetCount     : integer                       := 0;
   signal color          : std_logic_vector(11 downto 0) := X"F00";
@@ -46,6 +46,10 @@ begin
     constant MAX_X      : unsigned(8 downto 0) := to_unsigned(Resolution - 1, 9);
     variable x_offset   : integer              := 0;
     variable y_offset   : integer              := 0;
+    
+    attribute mark_debug : string; 
+--   attribute mark_debug of state_type     : signal is "true";
+--   attribute mark_debug of Current_Size     : signal is "true";
   begin
     if reset = '1' then
       -- add logic for resetting the display
@@ -57,7 +61,7 @@ begin
         when Refresh =>
           -- print "Refreshing" on LCD
           -- LCDoutput <= "Refreshing"; -- convert to std_logic_vector in hex
-          if resetCount < Resolution ** 2 then
+          if resetCount < 360 ** 2 then
             RAMaddress <= std_logic_vector(to_unsigned(resetCount, RAMaddress'length));
             RAMdata    <= DefaultColor;
             resetCount <= resetCount + 1;
@@ -69,10 +73,12 @@ begin
         when Ready =>
           -- print "Hardware Ready" on LCD
           -- LCDoutput <= "Hardware Ready"; -- convert to std_logic_vector in hex
+          LCD_data <= X"48617264776172652052656164792020";
           current_state <= Draw;
 
         when Draw =>
           -- print "Drawing" on LCD
+          LCD_data <= X"44726177696E67202020202020202020";
           -- LCDoutput <= "Drawing"; -- convert to std_logic_vector in hex
 
           if kp_pulse = '1' then
@@ -95,10 +101,10 @@ begin
           case Screen_Resulution is
             when Standard =>
               Resolution    <= 256; -- Standard resolution (now a signal)
-              current_state <= Refresh;
-            when Double =>
+--              current_state <= Refresh;
+            when Twice =>
               Resolution    <= 360; -- Standard resolution (now a signal)
-              current_state <= Refresh;
+--              current_state <= Refresh;
           end case;
 
           case Current_Size is --  prints different sized cursors 
@@ -192,6 +198,7 @@ begin
 
         when Command =>
           --   -- print command on LCD
+          LCD_data <= X"436F6D6D616E64202020202020202020";
           --   -- LCDoutput <= Command; -- convert to std_logic_vector in hex
           if kp_pulse = '1' then
 
@@ -200,10 +207,10 @@ begin
                 case keypress is
                   when X"31" =>
                     Screen_Resulution <= Standard;
-                    current_state     <= Draw;
+                    current_state     <= Refresh;
                   when X"32" =>
-                    Screen_Resulution <= Double;
-                    current_state     <= Draw;
+                    Screen_Resulution <= Twice;
+                    current_state     <= Refresh;
                   when others =>
                     current_state <= Draw; -- Ignore other key presses and return to Draw state
                 end case;
