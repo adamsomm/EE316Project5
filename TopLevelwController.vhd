@@ -127,10 +127,11 @@ architecture Structural of TopLevelwController is
       qy            : in std_logic_vector(8 downto 0);
       kp_pulse      : in std_logic;
       keyPress      : in std_logic_vector(7 downto 0);
+      color_o       : out std_logic_vector(11 downto 0);
       SETResolution : out integer;
       RAMaddress    : out std_logic_vector(16 downto 0);
       RAMdata       : out std_logic_vector(11 downto 0);
-      LCD_data      : out std_logic_vector(127 downto 0)
+      LCD_data      : out std_logic_vector(255 downto 0)
     );
   end component;
 
@@ -142,7 +143,7 @@ architecture Structural of TopLevelwController is
     port (
       clk     : in std_logic;
       reset   : in std_logic;
-      data_in : in std_logic_vector(127 downto 0);
+      data_in : in std_logic_vector(255 downto 0);
       scl     : inout std_logic;
       sda     : inout std_logic
     );
@@ -173,7 +174,7 @@ architecture Structural of TopLevelwController is
   signal resolution      : integer := 256;
   signal ascii_code      : std_logic_vector(7 downto 0); -- ASCII code from PS2 keyboard
   signal ascii_new_pulse : std_logic; -- Pulse indicating a new ASCII character is available
-  signal LCD_data        : std_logic_vector(127 downto 0); -- Data to be sent to the LCD
+  signal LCD_data        : std_logic_vector(255 downto 0); -- Data to be sent to the LCD
      attribute mark_debug : string; 
    attribute mark_debug of ascii_new_pulse     : signal is "true";
   -- attribute mark_debug of qy     : signal is "true";
@@ -224,6 +225,7 @@ begin
     kp_pulse      => ascii_new_pulse,
     keyPress      => ascii_code,
     SETResolution => resolution,
+    color_o         => open,
     RAMaddress    => ram_addr_porta,
     RAMdata       => ram_data_porta,
     LCD_data      => LCD_data

@@ -11,7 +11,7 @@ entity LCD_I2C_user_logic is
   port (
     clk   : in std_logic;
     reset : in std_logic;
-    data_in : in std_logic_vector(127 downto 0);
+    data_in : in std_logic_vector(255 downto 0);
     scl : inout std_logic;
     sda : inout std_logic
   );
@@ -44,7 +44,7 @@ architecture user_logic of LCD_I2C_user_logic is
       clk      : in std_logic;
       reset    : in std_logic;
       busy     : in std_logic;
-      data_in  : in std_logic_vector(127 downto 0);
+      data_in  : in std_logic_vector(255 downto 0);
 --      MODE     : in std_logic_vector(2 downto 0)   := "001";
       data_out : out std_logic_vector(7 downto 0)
     );

@@ -7,7 +7,7 @@ entity LCDDataSelect is
     clk      : in std_logic;
     reset    : in std_logic;
     busy     : in std_logic                       := '0';
-    data_in  : in std_logic_vector(127 downto 0);
+    data_in  : in std_logic_vector(255 downto 0);
     data_out : out std_logic_vector(7 downto 0) := (others => '0')
   );
 end LCDDataSelect;
@@ -23,7 +23,7 @@ architecture Behavioral of LCDDataSelect is
   signal data   : std_logic_vector(7 downto 0);
   signal counter : integer := 0;
   signal LCD_DATA : std_logic_vector(3 downto 0);
-  signal byteSel : integer range 1 to 25 := 1;
+  signal byteSel : integer range 1 to 43 := 1;
   signal oldBusy : std_logic;
   signal dataCount : integer range 1 to 6 := 1;
   signal prevDataCount : integer range 1 to 6 := 1;
@@ -83,7 +83,7 @@ begin
         end if;
         prevDataCount <= dataCount;
         if dataCount = 1 and prevDataCount = 6 then
-          if byteSel < 25 then
+          if byteSel < 42 then
             byteSel <= byteSel + 1;
             --LCD_RS <= RS; bad, updates 1 cycle late 
           else
@@ -125,6 +125,28 @@ begin
       when 23 => RS <= '1'; data <= data_in(23 downto 16);
       when 24 => RS <= '1'; data <= data_in(15 downto 8);
       when 25 => RS <= '1'; data <= data_in(7 downto 0);
+      when 26 => RS <= '0'; data <= X"C0"; -- next line
+      when 27 => RS <= '1'; data <= data_in(255 downto 248);
+      when 28 => RS <= '1'; data <= data_in(247 downto 240);
+      when 29 => RS <= '1'; data <= data_in(239 downto 232);
+      when 30 => RS <= '1'; data <= data_in(231 downto 224);
+      when 31 => RS <= '1'; data <= data_in(223 downto 216);
+      when 32 => RS <= '1'; data <= data_in(215 downto 208);
+      when 33 => RS <= '1'; data <= data_in(207 downto 200);
+      when 34 => RS <= '1'; data <= data_in(199 downto 192);
+      when 35 => RS <= '1'; data <= data_in(191 downto 184);
+      when 36 => RS <= '1'; data <= data_in(183 downto 176);
+      when 37 => RS <= '1'; data <= data_in(175 downto 168);
+      when 38 => RS <= '1'; data <= data_in(167 downto 160);
+      when 39 => RS <= '1'; data <= data_in(159 downto 152);
+      when 40 => RS <= '1'; data <= data_in(151 downto 144);
+      when 41 => RS <= '1'; data <= data_in(143 downto 136);
+      when 42 => RS <= '1'; data <= data_in(135 downto 128);
+--      when others =>
+--        RS     <= '0';
+--        LCD_EN <= '0';
+--        LCD_DATA<= (others => '0');
+--      when others => RS <= '0'; -- Default command
 
       when others => data <= X"28"; RS <= '0'; -- Default command
     end case;
