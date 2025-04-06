@@ -9,8 +9,8 @@ entity TopLevelwController is
     N1                        : integer := 0;
     clk_freq                  : integer := 125_000_000;
     ps2_debounce_counter_size : integer := 10;
-    input_clk : integer := 125_000_000;
-    bus_clk   : integer := 50_000 -- speed the i2c bus (scl) will run at in Hz
+    input_clk                 : integer := 125_000_000;
+    bus_clk                   : integer := 50_000 -- speed the i2c bus (scl) will run at in Hz
   );
   port (
     clk_125mhz : in std_logic; -- 125 MHz input clock
@@ -27,6 +27,9 @@ entity TopLevelwController is
     vga_red   : out std_logic_vector(3 downto 0);
     vga_green : out std_logic_vector(3 downto 0);
     vga_blue  : out std_logic_vector(3 downto 0);
+    RED       : out std_logic;
+    GREEN     : out std_logic;
+    BLUE      : out std_logic;
     scl       : inout std_logic; -- I2C clock line
     sda       : inout std_logic -- I2C data line
   );
@@ -149,6 +152,15 @@ architecture Structural of TopLevelwController is
     );
   end component;
 
+  component RGBPWM
+    port (
+      clk       : in std_logic;
+      rst       : in std_logic;
+      ColorData : in std_logic_vector(3 downto 0);
+      PWMout    : out std_logic
+    );
+  end component;
+
   signal reset_d : std_logic := '0';
 
   signal Bx_db        : std_logic;
@@ -175,8 +187,11 @@ architecture Structural of TopLevelwController is
   signal ascii_code      : std_logic_vector(7 downto 0); -- ASCII code from PS2 keyboard
   signal ascii_new_pulse : std_logic; -- Pulse indicating a new ASCII character is available
   signal LCD_data        : std_logic_vector(255 downto 0); -- Data to be sent to the LCD
-     attribute mark_debug : string; 
-   attribute mark_debug of ascii_new_pulse     : signal is "true";
+  signal Color           : std_logic_vector(11 downto 0); -- Color data for VGA
+
+  attribute mark_debug                    : string;
+  attribute mark_debug of ascii_new_pulse : signal is "true";
+
   -- attribute mark_debug of qy     : signal is "true";
   -- attribute mark_debug of eny     : signal is "true";
   -- attribute mark_debug of enx     : signal is "true";
@@ -225,7 +240,7 @@ begin
     kp_pulse      => ascii_new_pulse,
     keyPress      => ascii_code,
     SETResolution => resolution,
-    color_o         => open,
+    color_o       => Color,
     RAMaddress    => ram_addr_porta,
     RAMdata       => ram_data_porta,
     LCD_data      => LCD_data
@@ -383,4 +398,32 @@ begin
     iCLK   => clk_125mhz,
     oRESET => reset_d
   );
+
+  RGBPWM_inst0 : RGBPWM
+  port map
+  (
+    clk       => clk_125mhz,
+    rst       => system_reset,
+    ColorData => color(11 downto 8),
+    PWMout    => RED
+  );
+
+  RGBPWM_inst1 : RGBPWM
+  port map
+  (
+    clk       => clk_125mhz,
+    rst       => system_reset,
+    ColorData => Color(7 downto 4),
+    PWMout    => GREEN
+  );
+
+  RGBPWM_inst2 : RGBPWM
+  port map
+  (
+    clk       => clk_125mhz,
+    rst       => system_reset,
+    ColorData => Color(3 downto 0),
+    PWMout    => BLUE
+  );
+
 end Structural;

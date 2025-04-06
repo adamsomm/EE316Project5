@@ -21,7 +21,7 @@ end ControllerStateMachine;
 architecture Behavioral of ControllerStateMachine is
   -- Define state type
   type state_type is (Ready, Draw, Command, Write, Refresh);
-  signal current_state : state_type;
+  signal current_state : state_type  := Refresh;
   type Cursor_Size is (One, Two, Three);
   signal Current_Size          : Cursor_Size := One;
   signal Current_Size_Buffered : Cursor_Size := One;
@@ -88,7 +88,7 @@ architecture Behavioral of ControllerStateMachine is
 begin
   SETResolution <= Resolution;
   -- Next state logic process
-  process (current_state, qx, qy, clk, reset, kp_pulse)
+  process (current_state, qx, qy, clk, reset, kp_pulse, colorVector_Buffer)
     variable temp_addr  : unsigned(16 downto 0);
     variable x_unsigned : unsigned(8 downto 0);
     variable y_unsigned : unsigned(8 downto 0);
@@ -135,13 +135,13 @@ begin
           -- LCDoutput <= "Hardware Ready"; -- convert to std_logic_vector in hex
           LCD_data_TOP <= X"48617264776172652052656164792020";
           LCD_data_BOT <= X"20202020202020202020202020202020"; -- clear bottom line
-          if readycount > 375000000 then
+          if readycount < 375000000 then
             readycount <= readycount + 1;
           else
             current_state <= Draw; -- Transition to Draw state after the delay
             readycount    <= 0;
           end if;
-          current_state <= Draw;
+          --current_state <= Draw;
 
         when Draw =>
           -- print "Drawing" on LCD
@@ -321,7 +321,7 @@ begin
                   when X"08" => 
                     colorInputState    <= RED_INPUT;
                     colorVector_Buffer <= X"303030";
-                    LCD_data_TOP       <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
+                    LCD_data_TOP       <= X"436F6D6D616E6420433A20" & X"303030" & X"2020";
                   when X"0D" =>
                     color           <= newColor;
                     colorVector     <= colorVector_Buffer;
@@ -330,25 +330,24 @@ begin
 
                     -- Handle hex input based on current state
                   when others =>
-                    LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
                     case colorInputState is
                       when RED_INPUT =>
                         newColor(11 downto 8)           <= ascii_to_4bit(keyPress);
                         colorVector_Buffer              <= keyPress & X"3030";
                         colorInputState                 <= GREEN_INPUT;
---                        LCD_data_TOP                    <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020"; -- "C:"
+                       LCD_data_TOP                    <= X"436F6D6D616E6420433A20" & keyPress & X"3030" & X"2020"; -- "C:"
 
                       when GREEN_INPUT =>
                         newColor(7 downto 4)           <= ascii_to_4bit(keyPress);
                         colorVector_Buffer             <= colorVector_Buffer(23 downto 16) & keyPress & X"30";
                         colorInputState                <= BLUE_INPUT;
---                        LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
+                       LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer(23 downto 16) & keyPress & X"30" & X"2020";
 
                       when BLUE_INPUT =>
                         newColor(3 downto 0)           <= ascii_to_4bit(keyPress);
                         colorVector_Buffer             <= colorVector_Buffer(23 downto 8) & keyPress;
                         colorInputState                <= IDLE;
---                        LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
+                       LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer(23 downto 8) & keyPress & X"2020";
 
 --                      when ENTER =>
 ----                        LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
