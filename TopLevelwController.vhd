@@ -31,7 +31,8 @@ entity TopLevelwController is
     GREEN     : out std_logic;
     BLUE      : out std_logic;
     scl       : inout std_logic; -- I2C clock line
-    sda       : inout std_logic -- I2C data line
+    sda       : inout std_logic; -- I2C data line
+    tx        : out std_logic -- UART transmit line
   );
 end TopLevelwController;
 
@@ -161,6 +162,21 @@ architecture Structural of TopLevelwController is
     );
   end component;
 
+  component uart_user_logic
+    port (
+      tx_data   : in std_logic_vector(7 downto 0);
+      tx_pulse  : in std_logic;
+      iclk      : in std_logic;
+      tx        : out std_logic;
+      rx        : in std_logic;
+      reset     : in std_logic;
+      regPulse  : out std_logic;
+      LCD_Data  : out std_logic_vector(127 downto 0);
+      Mode      : out std_logic_vector(2 downto 0);
+      Seven_seg : out std_logic_vector(15 downto 0)
+    );
+  end component;
+
   signal reset_d : std_logic := '0';
 
   signal Bx_db        : std_logic;
@@ -189,8 +205,17 @@ architecture Structural of TopLevelwController is
   signal LCD_data        : std_logic_vector(255 downto 0); -- Data to be sent to the LCD
   signal Color           : std_logic_vector(11 downto 0); -- Color data for VGA
 
-  attribute mark_debug                    : string;
-  attribute mark_debug of ascii_new_pulse : signal is "true";
+  signal tx_data  : std_logic_vector(7 downto 0); -- Data to be sent via UART
+  signal tx_pulse : std_logic; -- Pulse indicating data is ready to be sent
+  -- signal tx       : std_logic; -- UART transmit line
+  signal count           : integer := 0; -- Counter for baud rate generation
+  signal BaudPulse       : std_logic; -- Pulse for baud rate generation
+  signal ram_addr_BUFFER : std_logic_vector(16 downto 0); -- Buffer for RAM address
+  type transmission is (IDLE, SEND_BYTE);
+  signal UARTtransmission : transmission := IDLE; -- Current state of the transmission
+
+  -- attribute mark_debug                    : string;
+  -- attribute mark_debug of ascii_new_pulse : signal is "true";
 
   -- attribute mark_debug of qy     : signal is "true";
   -- attribute mark_debug of eny     : signal is "true";
@@ -216,6 +241,85 @@ begin
     end if;
   end process;
 
+  process(clk_125mhz)
+    constant BAUD_DIVIDER : integer := 10416; -- For 12,000 baud with 125MHz clock
+    variable baud_counter : integer range 0 to BAUD_DIVIDER-1 := 0;
+    variable byte_counter : integer range 0 to 1 := 0;
+  begin
+    if rising_edge(clk_125mhz) then
+      if system_reset = '1' then
+        -- Reset signals
+        tx_data <= (others => '0');
+        tx_pulse <= '0';
+        BaudPulse <= '0';
+        baud_counter := 0;
+        byte_counter := 0;
+        UARTtransmission <= IDLE;
+        ram_addr_buffer <= (others => '0');
+      else
+        -- Default values
+        tx_pulse <= '0';
+        
+        -- Detect changes in RAM address
+        ram_addr_buffer <= ram_addr_porta;
+        
+        -- State machine for UART transmission
+        case UARTtransmission is
+          when IDLE =>
+            BaudPulse <= '0';
+            if ram_addr_buffer /= ram_addr_porta then
+              -- New data available, start transmission
+              BaudPulse <= '1';
+              UARTtransmission <= SEND_BYTE;
+              byte_counter := 0;
+              baud_counter := 0;
+            end if;
+            
+          when SEND_BYTE =>
+            if baud_counter = BAUD_DIVIDER-1 then
+              -- End of baud period
+              baud_counter := 0;
+              
+              -- Send appropriate byte based on counter
+              if byte_counter = 0 then
+                tx_data <= ram_data_porta(15 downto 8); -- MSB first
+              else
+                tx_data <= ram_data_porta(7 downto 0); -- LSB second
+              end if;
+              
+              tx_pulse <= '1';
+              byte_counter := byte_counter + 1;
+              
+              -- Check if we've sent all bytes
+              if byte_counter = 2 then
+                UARTtransmission <= IDLE;
+                BaudPulse <= '0';
+              end if;
+            else
+              baud_counter := baud_counter + 1;
+            end if;
+            
+          when others =>
+            UARTtransmission <= IDLE;
+        end case;
+      end if;
+    end if;
+  end process;
+
+  uart_user_logic_inst : uart_user_logic
+  port map
+  (
+    tx_data   => tx_data,
+    tx_pulse  => BaudPulse,
+    iclk      => clk_125mhz,
+    tx        => tx,
+    rx        => open,
+    reset     => system_reset,
+    regPulse  => open,
+    LCD_Data  => open,
+    Mode      => open,
+    Seven_seg => open
+  );
   LCD_I2C_user_logic_inst : LCD_I2C_user_logic
   generic map(
     input_clk => input_clk,
