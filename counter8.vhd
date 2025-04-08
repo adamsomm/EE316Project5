@@ -1,73 +1,50 @@
 library ieee;
-use IEEE.STD_LOGIC_1164.ALL;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity LUT_top is
-    Port ( 
-        iclk    : in STD_LOGIC;
-        kb_code : in STD_LOGIC_vector(6 downto 0);
-        keys: out std_logic_vector(6 downto 0);
-        ubc_o   : out std_logic_vector(8 downto 0)
-    );
-end LUT_top;
+entity counter8 is
+   generic(N: integer := 9; N2: integer := 7; N1: integer := 0);
+   port(
+			clk, reset				: in std_logic;
+			syn_clr, load, en, up	: in std_logic;
+			clk_en 					: in std_logic := '1';			
+			d						: in std_logic_vector(N-1 downto 0);
+			max_tick, min_tick		: out std_logic;
+			q						: out std_logic_vector(N-1 downto 0)		
+   );
+end counter8;
 
-architecture Behavioral of LUT_top is 
-    signal ubc : std_logic_vector(8 downto 0);
+architecture arch of counter8 is
+   signal r_reg				 		: unsigned(N-1 downto 0);
+   signal r_next				 	: unsigned(N-1 downto 0);
+   signal r_1				    	: unsigned(N-1 downto 0);
+   signal r_2				    	: unsigned(N-1 downto 0);
+	
 begin
-
-    process(iclk)
-    begin
-        if rising_edge(iclk) then
-            case kb_code is 
-                -- Uppercase Letters A-Z
-                when "1000001" => ubc <= std_logic_vector(to_unsigned(8,9));    -- A
-                when "1000010" => ubc <= std_logic_vector(to_unsigned(16,9));   -- B
-                when "1000011" => ubc <= std_logic_vector(to_unsigned(24,9));   -- C
-                when "1000100" => ubc <= std_logic_vector(to_unsigned(32,9));    -- D
-                when "1000101" => ubc <= std_logic_vector(to_unsigned(40,9));    -- E
-                when "1000110" => ubc <= std_logic_vector(to_unsigned(48,9));    -- F
-                when "1000111" => ubc <= std_logic_vector(to_unsigned(56,9));    -- G
-                when "1001000" => ubc <= std_logic_vector(to_unsigned(64,9));    -- H
-                when "1001001" => ubc <= std_logic_vector(to_unsigned(72,9));    -- I
-                when "1001010" => ubc <= std_logic_vector(to_unsigned(80,9));    -- J
-                when "1001011" => ubc <= std_logic_vector(to_unsigned(88,9));    -- K
-                when "1001100" => ubc <= std_logic_vector(to_unsigned(96,9));    -- L
-                when "1001101" => ubc <= std_logic_vector(to_unsigned(104,9));   -- M
-                when "1001110" => ubc <= std_logic_vector(to_unsigned(112,9));   -- N
-                when "1001111" => ubc <= std_logic_vector(to_unsigned(120,9));   -- O
-                when "1010000" => ubc <= std_logic_vector(to_unsigned(128,9));   -- P 
-                when "1010001" => ubc <= std_logic_vector(to_unsigned(136,9));   -- Q 
-                when "1010010" => ubc <= std_logic_vector(to_unsigned(144,9));   -- R 
-                when "1010011" => ubc <= std_logic_vector(to_unsigned(152,9));   -- S
-                when "1010100" => ubc <= std_logic_vector(to_unsigned(160,9));   -- T 
-                when "1010101" => ubc <= std_logic_vector(to_unsigned(168,9));   -- U
-                when "1010110" => ubc <= std_logic_vector(to_unsigned(176,9));   -- V
-                when "1010111" => ubc <= std_logic_vector(to_unsigned(184,9));   -- W 
-                when "1011000" => ubc <= std_logic_vector(to_unsigned(192,9));   -- X 
-                when "1011001" => ubc <= std_logic_vector(to_unsigned(200,9));   -- Y 
-                when "1011010" => ubc <= std_logic_vector(to_unsigned(208,9));   -- Z
-                
-                -- Numbers 0-9
-                when "0110000" => ubc <= std_logic_vector(to_unsigned(384,9));  -- 0
-                when "0110001" => ubc <= std_logic_vector(to_unsigned(392,9));   -- 1
-                when "0110010" => ubc <= std_logic_vector(to_unsigned(400,9));   -- 2 
-                when "0110011" => ubc <= std_logic_vector(to_unsigned(408,9));   -- 3
-                when "0110100" => ubc <= std_logic_vector(to_unsigned(416,9));  -- 4 
-                when "0110101" => ubc <= std_logic_vector(to_unsigned(424,9));  -- 5 
-                when "0110110" => ubc <= std_logic_vector(to_unsigned(432,9));  -- 6 
-                when "0110111" => ubc <= std_logic_vector(to_unsigned(440,9));  -- 7 
-                when "0111000" => ubc <= std_logic_vector(to_unsigned(448,9));  -- 8 
-                when "0111001" => ubc <= std_logic_vector(to_unsigned(452,9));  -- 9 
-                
-                -- Special characters
-                when "0100000" => ubc <=  std_logic_vector(to_unsigned(256,9));  -- space 
-                
-                -- Default case
-                when others => ubc <= (others => '0');
-            end case;
-        end if;
-    end process;
-
-    ubc_o <= ubc;
-
-end Behavioral;
+   -- register
+   process(clk,reset)
+   begin
+      if (reset='1') then
+         r_reg <= (others=>'0');
+      elsif rising_edge(clk) and clk_en = '1' then
+         r_reg <= r_next;
+      end if;
+   end process;
+	
+   -- next-state logic
+   r_next <= (others=>'0') when syn_clr='1' else
+             unsigned(d)   when load='1' else
+			 r_1     	   when en ='1' and up='1' else
+             r_2     	   when en ='1' and up='0' else
+             r_reg;
+             
+   r_1 <=   to_unsigned(N1, r_reg'length) when r_reg = to_unsigned(N2, r_reg'length) else
+            r_reg + 1; 
+   r_2 <=   to_unsigned(N2, r_reg'length) when r_reg = to_unsigned(N1, r_reg'length) else
+            r_reg - 1;                        
+             
+   -- output logic
+   q        <= std_logic_vector(r_reg);
+   max_tick <= '1' when r_reg=to_unsigned(N2, r_reg'length) else '0';
+   min_tick <= '1' when r_reg=to_unsigned(N1, r_reg'length) else '0';
+end arch;

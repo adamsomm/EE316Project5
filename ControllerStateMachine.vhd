@@ -18,7 +18,20 @@ entity ControllerStateMachine is
   );
 end ControllerStateMachine;
 
+
+
 architecture Behavioral of ControllerStateMachine is
+  component top_lvl
+    port (
+      iclk : in STD_LOGIC;
+      c_code : in STD_LOGIC_VECTOR(11 DOWNTO 0);
+      ram_addr : in std_logic_vector(16 downto 0);
+      ascii_out : out std_logic_vector(6 downto 0);
+      reset : in std_logic;
+      ascii_newl : in std_logic;
+      ascii_code : in std_logic_vector(7 downto 0)
+    );
+  end component;
   -- Define state type
   type state_type is (Ready, Draw, Command, Write, Refresh);
   signal current_state : state_type := Refresh;
@@ -45,6 +58,7 @@ architecture Behavioral of ControllerStateMachine is
   signal Resdisplay_Buffer   : std_logic_vector(7 downto 0);
   signal colorVector         : std_logic_vector(23 downto 0) := X"303030";
   signal colorVector_Buffer  : std_logic_vector(23 downto 0) := X"303030";
+  signal RAMaddressbuffer    : std_logic_vector(16 downto 0) := (others => '0');
 
   type ColorInputStates is (IDLE, RED_INPUT, GREEN_INPUT, BLUE_INPUT);
   signal colorInputState : ColorInputStates := IDLE;
@@ -86,6 +100,17 @@ architecture Behavioral of ControllerStateMachine is
   end function;
 
 begin
+  top_lvl_inst : top_lvl
+  port map (
+    iclk => clk,
+    c_code => color,
+    ram_addr => RAMaddressbuffer,
+    ascii_out => open,
+    reset => reset,
+    ascii_newl => kp_pulse,
+    ascii_code => keyPress
+  );
+
   SETResolution <= Resolution;
   -- Next state logic process
   process (current_state, qx, qy, clk, reset, kp_pulse, colorVector_Buffer)
@@ -144,6 +169,7 @@ begin
           --current_state <= Draw;
 
         when Draw =>
+          RAMaddressbuffer <= (others => '0');
           -- print "Drawing" on LCD
           LCD_data_TOP <= X"44726177696E67202020202020202020";
           --LCD_data_BOT <= X"20202020202020202020202020202020"; -- clear bottom line
@@ -420,6 +446,7 @@ begin
           end if;
           --   -- print text on LCD
           LCD_data_TOP <= X"54657874202020202020202020202020"; -- "Text" in hex
+          RAMaddressbuffer <= std_logic_vector(to_unsigned(resetCount, RAMaddress'length));
           --   -- LCDoutput <= Text; -- convert to std_logic_vector in hex
         when others =>
           current_state <= Draw;

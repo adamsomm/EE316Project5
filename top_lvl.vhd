@@ -14,6 +14,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL; -- For unsigned operations (addition, subtracti
 --use UNISIM.VComponents.all;
 
 entity top_lvl is
+generic(N: integer := 9; N2: integer := 7; N1: integer := 0);
     Port ( 
            iclk         : in STD_LOGIC;
            c_code       : in STD_LOGIC_VECTOR(11 DOWNTO 0);
@@ -23,7 +24,7 @@ entity top_lvl is
            ascii_out      : out std_logic_vector(6 downto 0);           
            reset        : in std_logic;
            ascii_newl   : in std_logic;
-           ascii_code   : in std_logic_vector( 6 downto 0) 
+           ascii_code   : in std_logic_vector(7 downto 0) 
 
           );
 end top_lvl;
@@ -34,21 +35,30 @@ component LUT_top is
     port(
     
            iclk         : in STD_LOGIC;
-           kb_code      : in STD_LOGIC_vector(6 downto 0);
+           kb_code      : in STD_LOGIC_vector(7 downto 0);
            ubc_o        : out std_logic_vector(8 downto 0)
     );
 end component; 
 --------------------------------------------------------------------------------------------------
-component counter8 is 
- generic(N: integer := 9; N2: integer := 7; N1: integer := 0);
-   port(
-			clk, reset				: in std_logic;
-			syn_clr, load, en, up	: in std_logic;
-			clk_en 					: in std_logic := '1';			
-			d						: in std_logic_vector(N-1 downto 0);
-			max_tick, min_tick		: out std_logic;
-			q						: out std_logic_vector(N-1 downto 0)		
-   );
+component counter8
+  generic (
+    N : integer;
+    N2 : integer;
+    N1 : integer
+  );
+  port (
+    clk : in std_logic;
+    reset : in std_logic;
+    syn_clr : in std_logic;
+    load : in std_logic;
+    en : in std_logic;
+    up : in std_logic;
+    clk_en : in std_logic;
+    d : in std_logic_vector(N-1 downto 0);
+    max_tick : out std_logic;
+    min_tick : out std_logic;
+    q : out std_logic_vector(N-1 downto 0)
+  );
 end component;
 component univ_bin_counter is 
  generic(N: integer := 9; N2: integer := 511; N1: integer := 0);
@@ -62,7 +72,7 @@ component univ_bin_counter is
    );
 end component;
 --------------------------------------------------------------------------------------------------------
-component matt_rom is 
+component blk_mem_gen_1 is 
 port(
     addra   :in std_logic_vector(8 downto 0);
     clka    :in std_logic;
@@ -71,21 +81,21 @@ port(
 end component;
 --------------------------------------------------------------------------------------------------------
 
-component matt_ram is 
-port(
-    addra   :in std_logic_vector(16 downto 0);
-    clka    :IN STD_LOGIC;
-    dina    :in std_logic_vector(11 downto 0);
-    wea     :in std_logic_vector(0 downto 0);
+--component matt_ram is 
+--port(
+--    addra   :in std_logic_vector(16 downto 0);
+--    clka    :IN STD_LOGIC;
+--    dina    :in std_logic_vector(11 downto 0);
+--    wea     :in std_logic_vector(0 downto 0);
     
-    addrb   :in std_logic_vector(16 downto 0);
-    clkb    :IN STD_LOGIC;
-    doutb   :OUT std_logic_vector(11 downto 0)
+--    addrb   :in std_logic_vector(16 downto 0);
+--    clkb    :IN STD_LOGIC;
+--    doutb   :OUT std_logic_vector(11 downto 0)
 
-);
-end component;
+--);
+--end component;
 --------------------------------------------------------------------------------------------------------
-component Dummy_Ram is 
+component dummy_ram is 
 port(
     addra   :in std_logic_vector(6 downto 0);
     clka    :IN STD_LOGIC;
@@ -133,7 +143,7 @@ signal ram_o:std_logic_vector(11 downto 0);
 signal rom_data: std_logic_vector(7 downto 0);
 --signal ascii_newl: STD_LOGIC;  
 signal ubc_o:std_logic_vector(8 downto 0);
-signal ascii_code1:STD_LOGIC_VECTOR(6 DOWNTO 0);
+signal ascii_code1:STD_LOGIC_VECTOR(7 DOWNTO 0);
 
 signal cnt:integer:=0;
 signal cntr:integer:=0;
@@ -241,7 +251,7 @@ when store_dummy =>
        state<=count;
 
         end if; 
-   if ascii_code="0001101" then
+   if ascii_code="00001101" then
 enter<="1";
 state<=read_dummy;
 end if;   
@@ -320,24 +330,31 @@ port map(
 			q        =>  q2		
 );
 --------------------------------------------------------------------------------------------------------
-ubc_to_dummy: counter8
-port map(
-            clk      =>  iclk,
-			reset    =>  reset,
-			syn_clr  =>  '0',
-			load     =>  '0',
-			en       =>  en3,
-			up       =>  '1',
-			clk_en   =>  jclk,					
-			d        =>	 d1,					
-			max_tick =>  open,
-			min_tick =>  open,		
-			q        =>  q3		
-);
+
+counter8_inst : counter8
+  generic map (
+    N => N,
+    N2 => N2,
+    N1 => N1
+  )
+  port map (
+    clk => iclk,
+    reset => reset,
+    syn_clr => '0',
+    load => '0',
+    en => en3,
+    up => '1',
+    clk_en => jclk,
+    d => d1,
+    max_tick => open,
+    min_tick => open,
+    q => q3
+  );
+
 --------------------------------------------------------------------------------------------------------
 
 
-rom: matt_rom
+rom: blk_mem_gen_1
 port map(
             addra    =>  q1, 
             clka     =>  iclk, 
@@ -345,18 +362,18 @@ port map(
 );
 --------------------------------------------------------------------------------------------------------
 
-ram: matt_ram
-port map (
-            addra    =>  ram_addr2,
-            clka     =>  iclk,
-            dina     =>  dummy_o,
-            wea      =>  "1",           
-            addrb   =>  ram_addr2,
-            clkb    =>iclk,
-            doutb   =>ram_o
-);
+--ram: matt_ram
+--port map (
+--            addra    =>  ram_addr2,
+--            clka     =>  iclk,
+--            dina     =>  dummy_o,
+--            wea      =>  "1",           
+--            addrb   =>  ram_addr2,
+--            clkb    =>iclk,
+--            doutb   =>ram_o
+--);
 --------------------------------------------------------------------------------------------------------
-Dummy: Dummy_Ram
+Dummy: dummy_ram
 port map (
             addra    =>  q3(6 downto 0),
             clka     =>  iclk,

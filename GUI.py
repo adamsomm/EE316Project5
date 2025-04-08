@@ -6,7 +6,7 @@ import struct
 # Configuration
 SERIAL_PORT = 'COM5'  # Change to your serial port
 BAUD_RATE = 9600
-IMAGE_SIZE = (256, 256)  # Width, Height
+IMAGE_SIZE = (256, 256)  # Width, Height #############################################################
 
 # Create a blank white image
 image_array = np.ones((IMAGE_SIZE[1], IMAGE_SIZE[0], 3), dtype=np.uint8) * 255
@@ -21,7 +21,7 @@ def update_image(address, data):
     # Ensure coordinates are within bounds
     if 0 <= x < IMAGE_SIZE[0] and 0 <= y < IMAGE_SIZE[1]:
         # Set pixel to black (0,0,0)
-        image_array[y, x] = [0, 0, 0]
+        image_array[y, x] = [0, 0, 0] #############################################################
         return True
     return False
 
@@ -48,7 +48,7 @@ def main():
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
         print(f"Connected to {SERIAL_PORT} at {BAUD_RATE} baud")
     except Exception as e:
-        print(f"Failed to open serial port: {e}")
+        print(f"Failed to open serial port: {e}") #############################################################
         return
 
     try:
