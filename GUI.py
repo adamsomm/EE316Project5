@@ -4,8 +4,8 @@ from PIL import Image
 import struct
 
 # Configuration
-SERIAL_PORT = 'COM3'  # Change to your serial port
-BAUD_RATE = 115200
+SERIAL_PORT = 'COM5'  # Change to your serial port
+BAUD_RATE = 9600
 IMAGE_SIZE = (256, 256)  # Width, Height
 
 # Create a blank white image
@@ -27,27 +27,20 @@ def update_image(address, data):
 
 def receive_data(ser):
     """Receive and parse data from serial port"""
-    try:
-        # Wait for start byte (0xAA)
-        while True:
-            byte = ser.read(1)
-            if byte == b'\xAA':
-                break
-        
-        # Read address (2 bytes) and data (2 bytes)
-        packet = ser.read(4)
-        if len(packet) != 4:
-            return None, None
-        
-        # Unpack data (big-endian)
-        address = struct.unpack('>H', packet[:2])[0]
-        data = struct.unpack('>H', packet[2:4])[0]
-        
-        return address, data
+    # Wait for start byte
+    while True:
+        byte = ser.read(1)
+        if byte == b'\xAA':
+            break
     
-    except Exception as e:
-        print(f"Error receiving data: {e}")
-        return None, None
+    # Read address bytes
+    addr_msb = ser.read(1)
+    addr_lsb = ser.read(1)
+    
+    if len(addr_msb) == 1 and len(addr_lsb) == 1:
+        address = (addr_msb[0] << 8) | addr_lsb[0]
+        return address
+    return None
 
 def main():
     # Initialize serial connection

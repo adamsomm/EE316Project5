@@ -21,7 +21,7 @@ end ControllerStateMachine;
 architecture Behavioral of ControllerStateMachine is
   -- Define state type
   type state_type is (Ready, Draw, Command, Write, Refresh);
-  signal current_state : state_type  := Refresh;
+  signal current_state : state_type := Refresh;
   type Cursor_Size is (One, Two, Three);
   signal Current_Size          : Cursor_Size := One;
   signal Current_Size_Buffered : Cursor_Size := One;
@@ -106,14 +106,14 @@ begin
     color_o      <= color;
     if reset = '1' then
       -- add logic for resetting the display
-      color         <= X"000";
-      Resolution    <= 256;
-      Current_Size  <= One;
-      Resdisplay    <= X"31";
-      Brushdisplay  <= X"31";
-      current_state <= Refresh;
+      color              <= X"000";
+      Resolution         <= 256;
+      Current_Size       <= One;
+      Resdisplay         <= X"31";
+      Brushdisplay       <= X"31";
+      current_state      <= Refresh;
       colorVector_Buffer <= X"303030";
-      colorVector <= X"303030";
+      colorVector        <= X"303030";
     elsif rising_edge(clk) then
 
       case current_state is
@@ -163,6 +163,8 @@ begin
                 CommandPress  <= brushWidth; -- Change the command type to brushWidth for next key press
                 LCD_data_TOP  <= X"436F6D6D616E643A2053202020202020"; -- W
                 current_state <= Command; -- Transition to Command state on key press pulse
+              when X"09" =>
+                current_state <= Write;
               when others =>
                 --ignore other keypresses
                 current_state <= Draw; -- Stay in Draw state if the key is not recognized
@@ -308,17 +310,17 @@ begin
                   when X"67" => color <= X"0F0";
                     colorVector         <= X"306630";
                     current_state       <= Draw; -- 'g' for green
---                  when X"62" => color <= X"00F";
---                    colorVector         <= X"303066";
---                    current_state       <= Draw; -- 'b' for blue
+                    --                  when X"62" => color <= X"00F";
+                    --                    colorVector         <= X"303066";
+                    --                    current_state       <= Draw; -- 'b' for blue
 
                     -- Start manual hex input
                   when X"6D" => -- 'm' for manual
-                    colorInputState <= RED_INPUT;
+                    colorInputState    <= RED_INPUT;
                     colorVector_Buffer <= X"303030";
-                    LCD_data_TOP    <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020"; -- "C: 000"
-                  
-                  when X"08" => 
+                    LCD_data_TOP       <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020"; -- "C: 000"
+
+                  when X"08" =>
                     colorInputState    <= RED_INPUT;
                     colorVector_Buffer <= X"303030";
                     LCD_data_TOP       <= X"436F6D6D616E6420433A20" & X"303030" & X"2020";
@@ -332,31 +334,31 @@ begin
                   when others =>
                     case colorInputState is
                       when RED_INPUT =>
-                        newColor(11 downto 8)           <= ascii_to_4bit(keyPress);
-                        colorVector_Buffer              <= keyPress & X"3030";
-                        colorInputState                 <= GREEN_INPUT;
-                       LCD_data_TOP                    <= X"436F6D6D616E6420433A20" & keyPress & X"3030" & X"2020"; -- "C:"
+                        newColor(11 downto 8) <= ascii_to_4bit(keyPress);
+                        colorVector_Buffer    <= keyPress & X"3030";
+                        colorInputState       <= GREEN_INPUT;
+                        LCD_data_TOP          <= X"436F6D6D616E6420433A20" & keyPress & X"3030" & X"2020"; -- "C:"
 
                       when GREEN_INPUT =>
-                        newColor(7 downto 4)           <= ascii_to_4bit(keyPress);
-                        colorVector_Buffer             <= colorVector_Buffer(23 downto 16) & keyPress & X"30";
-                        colorInputState                <= BLUE_INPUT;
-                       LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer(23 downto 16) & keyPress & X"30" & X"2020";
+                        newColor(7 downto 4) <= ascii_to_4bit(keyPress);
+                        colorVector_Buffer   <= colorVector_Buffer(23 downto 16) & keyPress & X"30";
+                        colorInputState      <= BLUE_INPUT;
+                        LCD_data_TOP         <= X"436F6D6D616E6420433A20" & colorVector_Buffer(23 downto 16) & keyPress & X"30" & X"2020";
 
                       when BLUE_INPUT =>
-                        newColor(3 downto 0)           <= ascii_to_4bit(keyPress);
-                        colorVector_Buffer             <= colorVector_Buffer(23 downto 8) & keyPress;
-                        colorInputState                <= IDLE;
-                       LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer(23 downto 8) & keyPress & X"2020";
+                        newColor(3 downto 0) <= ascii_to_4bit(keyPress);
+                        colorVector_Buffer   <= colorVector_Buffer(23 downto 8) & keyPress;
+                        colorInputState      <= IDLE;
+                        LCD_data_TOP         <= X"436F6D6D616E6420433A20" & colorVector_Buffer(23 downto 8) & keyPress & X"2020";
 
---                      when ENTER =>
-----                        LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
---                        if keyPress = X"0D" then
---                          color           <= newColor;
---                          colorVector     <= colorVector_Buffer;
---                          current_state   <= Draw;
---                          colorInputState <= IDLE;
---                        end if;
+                        --                      when ENTER =>
+                        ----                        LCD_data_TOP                   <= X"436F6D6D616E6420433A20" & colorVector_Buffer & X"2020";
+                        --                        if keyPress = X"0D" then
+                        --                          color           <= newColor;
+                        --                          colorVector     <= colorVector_Buffer;
+                        --                          current_state   <= Draw;
+                        --                          colorInputState <= IDLE;
+                        --                        end if;
 
                       when IDLE =>
                         --colorVector_Buffer <= X"303030";
@@ -405,8 +407,19 @@ begin
             end case;
           end if; -- End of kp_pulse check
 
-          -- when Text =>
+        when Write =>
+          if kp_pulse = '1' then
+            case keyPress is
+              when X"09" =>
+                current_state <= Draw; -- 'Tab' key to return to Draw state
+              when others =>
+                current_state <= Write; -- Ignore other key presses and return to Draw state
+            end case;
+          else
+            current_state <= Write; -- Stay in Command state if no key press detected
+          end if;
           --   -- print text on LCD
+          LCD_data_TOP <= X"54657874202020202020202020202020"; -- "Text" in hex
           --   -- LCDoutput <= Text; -- convert to std_logic_vector in hex
         when others =>
           current_state <= Draw;

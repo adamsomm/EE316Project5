@@ -206,13 +206,14 @@ architecture Structural of TopLevelwController is
   signal Color           : std_logic_vector(11 downto 0); -- Color data for VGA
 
   signal tx_data  : std_logic_vector(7 downto 0); -- Data to be sent via UART
-  signal tx_pulse : std_logic; -- Pulse indicating data is ready to be sent
+--  signal tx_pulse : std_logic; -- Pulse indicating data is ready to be sent
   -- signal tx       : std_logic; -- UART transmit line
   signal count           : integer := 0; -- Counter for baud rate generation
   signal BaudPulse       : std_logic; -- Pulse for baud rate generation
   signal ram_addr_BUFFER : std_logic_vector(16 downto 0); -- Buffer for RAM address
   type transmission is (IDLE, SEND_BYTE);
   signal UARTtransmission : transmission := IDLE; -- Current state of the transmission
+  signal rx             : std_logic := '0';
 
   -- attribute mark_debug                    : string;
   -- attribute mark_debug of ascii_new_pulse : signal is "true";
@@ -242,70 +243,67 @@ begin
   end process;
 
   process(clk_125mhz)
-    constant BAUD_DIVIDER : integer := 10416; -- For 12,000 baud with 125MHz clock
-    variable baud_counter : integer range 0 to BAUD_DIVIDER-1 := 0;
-    variable byte_counter : integer range 0 to 1 := 0;
-  begin
-    if rising_edge(clk_125mhz) then
-      if system_reset = '1' then
-        -- Reset signals
-        tx_data <= (others => '0');
-        tx_pulse <= '0';
-        BaudPulse <= '0';
-        baud_counter := 0;
-        byte_counter := 0;
-        UARTtransmission <= IDLE;
-        ram_addr_buffer <= (others => '0');
-      else
-        -- Default values
-        tx_pulse <= '0';
-        
-        -- Detect changes in RAM address
-        ram_addr_buffer <= ram_addr_porta;
-        
-        -- State machine for UART transmission
-        case UARTtransmission is
-          when IDLE =>
+  constant BAUD_DIVIDER : integer := 13020; -- For 9600 baud with 125MHz clock
+  variable baud_counter : integer range 0 to BAUD_DIVIDER-1 := 0;
+  variable byte_counter : integer range 0 to 2 := 0; -- Now counts 0-2 for 3 states
+begin
+  if rising_edge(clk_125mhz) then
+    if system_reset = '1' then
+      -- Reset signals
+      tx_data <= (others => '0');
+      BaudPulse <= '0';
+      baud_counter := 0;
+      byte_counter := 0;
+      UARTtransmission <= IDLE;
+      ram_addr_buffer <= (others => '0');
+    else
+      -- Default values
+      --BaudPulse <= '0'; -- Default to low unless transmitting
+      
+      -- State machine for UART transmission
+      case UARTtransmission is
+        when IDLE =>
             BaudPulse <= '0';
-            if ram_addr_buffer /= ram_addr_porta then
-              -- New data available, start transmission
-              BaudPulse <= '1';
-              UARTtransmission <= SEND_BYTE;
-              byte_counter := 0;
-              baud_counter := 0;
-            end if;
+            ram_addr_buffer <= ram_addr_porta;
+          -- Detect changes in RAM address to start new transmission
+          if ram_addr_buffer /= ram_addr_porta then
+            UARTtransmission <= SEND_BYTE;
+            byte_counter := 0;
+            baud_counter := 0;
+          end if;
+          
+        when SEND_BYTE =>
+          if baud_counter < BAUD_DIVIDER-1 then
+            BaudPulse <= '1'; -- Active during transmission
+            baud_counter := baud_counter + 1;
+          else
+            -- End of baud period
+            baud_counter := 0;
+            BaudPulse <= '0';
             
-          when SEND_BYTE =>
-            if baud_counter = BAUD_DIVIDER-1 then
-              -- End of baud period
-              baud_counter := 0;
-              
-              -- Send appropriate byte based on counter
-              if byte_counter = 0 then
-                tx_data <= ram_data_porta(15 downto 8); -- MSB first
-              else
-                tx_data <= ram_data_porta(7 downto 0); -- LSB second
-              end if;
-              
-              tx_pulse <= '1';
-              byte_counter := byte_counter + 1;
-              
-              -- Check if we've sent all bytes
-              if byte_counter = 2 then
-                UARTtransmission <= IDLE;
-                BaudPulse <= '0';
-              end if;
-            else
-              baud_counter := baud_counter + 1;
-            end if;
+            -- Send appropriate byte based on counter
+            case byte_counter is
+              when 0 => 
+                tx_data <= X"AA"; -- Start byte
+              when 1 =>
+                tx_data <= ram_addr_porta(15 downto 8); -- Address MSB
+              when 2 =>
+                tx_data <= ram_addr_porta(7 downto 0); -- Address LSB
+              when others =>
+                tx_data <= X"00";
+            end case;
             
-          when others =>
-            UARTtransmission <= IDLE;
-        end case;
-      end if;
+            byte_counter := byte_counter + 1;
+            
+            -- Check if we've sent all bytes
+            if byte_counter >= 3 then
+              UARTtransmission <= IDLE;
+            end if;
+          end if;
+      end case;
     end if;
-  end process;
-
+  end if;
+end process;
   uart_user_logic_inst : uart_user_logic
   port map
   (
@@ -313,7 +311,7 @@ begin
     tx_pulse  => BaudPulse,
     iclk      => clk_125mhz,
     tx        => tx,
-    rx        => open,
+    rx        => rx,
     reset     => system_reset,
     regPulse  => open,
     LCD_Data  => open,
@@ -371,7 +369,7 @@ begin
     clka  => clk_125mhz, -- Write clock
     wea   => "1", -- Always enabled for writing
     addra => ram_addr_porta, -- From your write controller
-    dina  => ram_data_porta, -- 12-bit input data
+    dina  => ram_data_porta, --3 12-bit input data
 
     -- Read Port (B) 
     clkb  => clk_125mhz, -- Can be same or different clock
